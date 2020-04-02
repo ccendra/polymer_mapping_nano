@@ -284,7 +284,7 @@ def get_q_pixels(q, M, dx):
     Returns:
         f_pixels: q in pixel size
     """
-    f_angstrom = q / (2 * np.pi)
+    f_angstrom = q / (2 * np.pi)   # q = 1/d (d in Angstrom)
     freq_resolution = 1 / (M * dx)
     f_pixels = f_angstrom / freq_resolution
 
@@ -338,25 +338,43 @@ def raised_cosine_window_np(s, beta=0.2):
     return frequencies, window
 
 
-def full_image_filter_torch(img_gpu, filter_gpu, s):
+def bandpass_filtering_image(img_gpu, s, q, q_bandwidth, dx, beta=0.1, device='cuda'):
     """
     Computes FT of image, multiplies by user-defined filter, and computes the inverse FT to get
     a filtered version of the image.
-    :param img_gpu: 2D tensor with image (typically multiplied by raised cosine window)
-    :param filter_gpu: user-defined 2D tensor to apply as filter to FT of image
-    :param s: size of image
-    :return:
-        ifft: filtered image
+    :param img_gpu: image in Torch
+    :param s: size of fourier transform
+    :param q: spatial frequency center
+    :param q_bandwidth: bandwidth of spatial frequency filter
+    :param dx: pixel size
+    :param beta: raised cosine beta coefficient
+    :param device: default to 'cuda
+    :return: inverse fourier transform of image after applying raised cosine window and bandpass filter. Torch tensor.
     """
-    # Do real to complex discrete fourier transform
-    # Output is tensor of shape (s, s, 2), with real and imaginary components separated
+    # Make raised cosine window
+    _, rc_window = raised_cosine_window_np(s, beta=beta)
+    window = torch.from_numpy(np.outer(rc_window, rc_window)).to(device)
+
+    # Multiply real space image by window
+    img_gpu = img_gpu * window
+
+    # Make bandpass filter
+    bp_filter = torch.from_numpy(bandpass_filter(s, q - q_bandwidth, q + q_bandwidth, dx)).to(device)
+    # Shift DC component to edges and reshape for broad casting with fft_gpu
+    bp_filter = tensor_shift_fft(bp_filter).reshape(s, s, 1).double()
+
+    plt.imshow(bp_filter[:, :, 0], cmap='gray')
+    plt.title('Bandpass filter of {0}nm feature'.format(np.round(2 * np.pi / q / 10, 2)))
+    plt.show()
+
+    # Do FFT of img_gpu
     fft_gpu = torch.rfft(img_gpu, 2, normalized=False, onesided=False)
 
-    # Reshape filter to (s, s, 1) for broadcasting with fft_gpu in next step
-    filter_gpu = filter_gpu.reshape((s, s, 1))
+    # Do inverse FFT of FFT of image multiplied by bandpass filter
+    ifft = torch.irfft(fft_gpu * bp_filter, 2, normalized=False, onesided=False)
+    ifft = ifft + torch.abs(torch.min(ifft))  # Rescale values such that no negative intensity values
 
-    # Do inverse: Complex to real transformation
-    ifft = torch.irfft(fft_gpu * filter_gpu, 2, normalized=False, onesided=False)
-    ifft = ifft + torch.abs(torch.min(ifft))   # Rescale values such that no negative intensity values
 
     return ifft
+
+
