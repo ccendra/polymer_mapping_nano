@@ -338,7 +338,7 @@ def raised_cosine_window_np(s, beta=0.2):
     return frequencies, window
 
 
-def bandpass_filtering_image(img_gpu, s, q, q_bandwidth, dx, beta=0.1, device='cuda'):
+def bandpass_filtering_image(img_gpu, q, q_bandwidth, dx, beta=0.1, device='cuda'):
     """
     Computes FT of image, multiplies by user-defined filter, and computes the inverse FT to get
     a filtered version of the image.
@@ -351,6 +351,14 @@ def bandpass_filtering_image(img_gpu, s, q, q_bandwidth, dx, beta=0.1, device='c
     :param device: default to 'cuda
     :return: inverse fourier transform of image after applying raised cosine window and bandpass filter. Torch tensor.
     """
+    # Pad image if shape[0] != shape[1]
+    m, n = img_gpu.shape
+    s = max(m, n)
+    if m != n:
+        print('padding tensor')
+        pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
+        img_gpu = pad(img_gpu)
+
     # Make raised cosine window
     _, rc_window = raised_cosine_window_np(s, beta=beta)
     window = torch.from_numpy(np.outer(rc_window, rc_window)).to(device)
@@ -374,7 +382,4 @@ def bandpass_filtering_image(img_gpu, s, q, q_bandwidth, dx, beta=0.1, device='c
     ifft = torch.irfft(fft_gpu * bp_filter, 2, normalized=False, onesided=False)
     ifft = ifft + torch.abs(torch.min(ifft))  # Rescale values such that no negative intensity values
 
-
     return ifft
-
-
