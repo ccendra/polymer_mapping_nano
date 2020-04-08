@@ -99,14 +99,15 @@ def get_colors(angles):
     return output
 
 
-def plot_orientation_map(orientation_map, angles, title='', save_fig='', show=False):
+def plot_orientation_map(orientation_map, angles, size=10, title='', save_fig='', show=True):
     """Plots orientation map using a circular color palette to describe angular orientation.
     Arguments:
         """
     cmap = colors.ListedColormap(get_colors(angles + 90))
 
+    plt.figure(figsize=(size, size))
     plt.imshow(orientation_map, cmap=cmap)
-    plt.colorbar()
+    # plt.colorbar()
     if title:
         plt.title(title)
     if save_fig:
@@ -115,7 +116,7 @@ def plot_orientation_map(orientation_map, angles, title='', save_fig='', show=Fa
         plt.show()
 
 
-def intensity_q_lineout(x, y, q_range=[0, 1.5], save_fig='', show=False):
+def intensity_q_lineout(x, y, q_range=[0, 1.5], save_fig='', show=True):
     plt.figure(figsize=(8,5))
     plt.scatter(x, y, s=0.5, color='blue')
     plt.plot(x, y, linewidth=0.2, color='black')
