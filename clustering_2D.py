@@ -1,23 +1,21 @@
 import numpy as np
+import pandas as pd
 import time
 import matplotlib.pyplot as plt
 from scipy import optimize
-from matplotlib import colors
-import pandas as pd
-
-import plot_functions as plot
 
 
-def find_clusters(data, threshold, min_cluster_size, max_separation):
+def find_clusters(data, pixel_size, threshold=10, min_cluster_size=5, max_separation=3):
     """Computes (x, y) map of clusters for input numpy array (data) as specified by argument conditions. Returns
     a numbered map of clusters and averaged orientation map of each cluster.
     Arguments:
-        data: 3D peaks array with 1 at (x, y, th) locations with peak center and 0 otherwise
+        data: 2D numpy array providing maximum orientation theta at each (x, y)
         threshold: maximum angular deviation (+/-) relative to average orientation of a cluster allowed for
                     considering a neighboring point belongs to the same cluster
         min_cluster_size: minimum size of a cluster (in total number of pixels) for it to be considered a cluster
         max_separation: maximum separation allowed between neighboring points with similar orientation for them to be
                     considered part of the same cluster.
+        pixel_size: length of one pixel in nm
     Returns:
         cluster_map: 2D numpy array with cluster number at each (x,y) formed based on arguments above. NaN values in
                 (x, y) locations where no cluster was found.
@@ -29,64 +27,53 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
                 troubleshooting or more analysis.
     """
     # Initialize outputs
-    m, n, _ = data.shape
-
-    rows, cols, angles = np.where(data > 0)
-    k = int(np.max(np.sum(data, axis=2)))
-
-    # Make input arrays
-    input_array = np.full(shape=(m, n, k), fill_value=np.nan)
-    input_counter = np.zeros((m, n), dtype=int)
-
-    # Fill input arrays with values
-    for i in range(len(rows)):
-        row, col, th = rows[i], cols[i], angles[i]
-        input_array[row, col, input_counter[row, col]] = th
-        input_counter[row, col] += 1
-
-    estimation = int(m * n * 2 / min_cluster_size)
-    output = np.full(shape=(m, n, estimation), fill_value=np.nan)
+    #
+    m, n = data.shape
     # Cluster map
-    cluster_map = np.full(shape=(m, n, k), fill_value=np.nan)
+    cluster_map = np.full(shape=(m, n), fill_value=np.nan)
+    # Cluster average orientation map
+    cluster_orientation_map = np.full(shape=(m, n), fill_value=np.nan)
+    # Cluster standard deviation orientation map
+    cluster_orientation_std = np.full(shape=(m, n), fill_value=np.nan)
     # Dictionary to track properties for each cluster
     cluster_properties = {}
     # Tracker for cluster number
-    cluster_number = 0
+    cluster_number = 1
 
     # Keep track of computation time
     start_time = time.time()
-    num_pixels = []
 
     for row in range(m):
-        if row % 10 == 0:
+        if row % 30 == 0:
             print('row: ', row)
         for col in range(n):
-            for i in range(input_counter[row, col]):
-                theta = input_array[row, col, i]
-                if input_counter[row, col] > 0:
-                    theta_list, x_coords, y_coords = try_forming_cluster(input_array, input_counter, theta, threshold,
-                                                                         row, col, max_separation)
-                    # Determine if found cluster is large enough to be considered a cluster. If yes, save it in outputs.
-                    if len(x_coords) >= min_cluster_size:
-                        cluster_map[x_coords, y_coords, input_counter[x_coords, y_coords]-1] = cluster_number
-                        output[x_coords, y_coords, cluster_number] = theta_list
-                        cluster_properties[cluster_number] = \
-                            {'median_theta': np.median(theta_list), 'stdev_theta': np.std(theta_list),
-                             'number_pixels': len(x_coords), 'theta_list': theta_list}
-                        cluster_number += 1
-                        input_counter[x_coords, y_coords] -= 1
-                        num_pixels.append(len(x_coords))
+            if np.isnan(cluster_map[row, col]):
+                theta_list, x_coords, y_coords = try_forming_cluster(data, threshold, row, max_separation, cluster_map)
+                # Determine if found cluster is large enough to be considered a cluster. If yes, save it in outputs.
+                if len(x_coords) >= min_cluster_size:
+                    cluster_map[x_coords, y_coords] = cluster_number
+                    cluster_orientation_map[x_coords, y_coords] = np.mean(theta_list)
+                    cluster_orientation_std[x_coords, y_coords] = np.std(theta_list)
+                    cluster_properties[cluster_number] = \
+                        {'mean_theta': np.mean(theta_list), 'stdev_theta': np.std(theta_list),
+                         'number_pixels': len(x_coords), 'cluster_size_nm': np.sqrt(len(x_coords)) * pixel_size,
+                         'theta_list': theta_list}
+                    cluster_number += 1
+                # Else, mark locations as belonging to a cluster that is too small
+                else:
+                    cluster_map[x_coords, y_coords] = -1
 
-    output = output[:, :, :cluster_number]
-    print('formed {0} clusters'.format(cluster_number))
-    if cluster_number > 0:
-        print('Mean size of clusters is {0} pixels'.format(np.round(np.mean(num_pixels), 2)))
-    print('clustering time(s): ', np.round((time.time() - start_time), 1))
+    # Convert cluster map to dataframe to remove zeros (locations where no cluster could be found)
+    # and convert again to numpy
+    cluster_map_df = pd.DataFrame(cluster_map)
+    cluster_map = cluster_map_df[cluster_map_df > 0].to_numpy()
 
-    return cluster_map, output, cluster_properties
+    print('clustering time(min): ', np.round((time.time() - start_time) / 60, 1))
+
+    return cluster_map, cluster_orientation_map, cluster_orientation_std, cluster_properties
 
 
-def try_forming_cluster(input_array, input_counter, theta, threshold, start_row, start_col, separation):
+def try_forming_cluster(data, threshold, start_row, separation, cluster_map):
     """Iterates over data array at a certain starting point (start row, start col) and searches for neighboring points
     that can form a cluster. Returns a single cluster and list of orientation values.
     Arguments:
@@ -103,31 +90,19 @@ def try_forming_cluster(input_array, input_counter, theta, threshold, start_row,
         theta_list: list of theta values at each point belonging to cluster
         x_coords, y_coords = list of x and y coordinates, respectively, of points belonging to the cluster
     """
-    m, n, _ = input_array.shape
+    m, n = data.shape
     # Initialization
-    theta_list = np.array([theta])
-    x_coords = np.array([start_row])
-    y_coords = np.array([start_col])
+    theta_list = []
+    x_coords = []
+    y_coords = []
 
     for row in range(start_row, m):
-        if row == start_row:
-            col_start = start_col + 1
-        else:
-            col_start = 0
-
-        if (np.abs(x_coords - row) > separation).all():
-            break
-
-        for col in range(col_start, n):
-            thetas = input_array[row, col]  # get possible theta values
-            if not np.isnan(thetas).any():
-                closest_theta_index = np.nanargmin(np.abs(np.mean(theta_list) - thetas))
-                th = input_array[row, col, closest_theta_index]
-                if input_counter[row, col] > 0 and point_belongs_to_cluster(th, x_coords, y_coords, theta_list, threshold,
-                                                                            row, col, separation):
-                    x_coords = np.append(x_coords, row)
-                    y_coords = np.append(y_coords, col)
-                    theta_list = np.append(theta_list, th)  # Update orientation list
+        for col in range(n):
+            theta = data[row, col]  # get theta value
+            if np.isnan(cluster_map[row, col]) and point_belongs_to_cluster(theta, x_coords, y_coords, theta_list, threshold, row, col, separation):
+                x_coords.append(row)
+                y_coords.append(col)
+                theta_list.append(theta)  # Update orientation list
 
     return theta_list, x_coords, y_coords
 
@@ -150,47 +125,43 @@ def point_belongs_to_cluster(value, x_coords, y_coords, theta_list, threshold, r
         if len(x_coords) == 0:
             return True
         else:
-            if np.abs(value - np.median(theta_list)) <= threshold:
-                distance = np.sqrt((np.array(x_coords) - row) ** 2 + (np.array(y_coords) - col) ** 2) <= separation
-                if distance.any():
+            if np.abs(value - np.mean(theta_list)) <= threshold:
+                distance_x = np.abs(np.array(x_coords) - row) <= separation
+                distance_y = np.abs(np.array(y_coords) - col) <= separation
+                if distance_x.any() and distance_y.any():
                     return True
+
     return False
 
 
-def plot_cluster_map(output, angles, xlength, ylength):
-
-    cmap = colors.ListedColormap(plot.get_colors(angles + 90))
-    plt.figure(figsize=(10, 10))
-    for i in range(output.shape[2]):
-        plt.imshow(output[:, :, i], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
-    plt.show()
-
-
-def cumulative_step_histogram(cluster_size, title='', save_fig=''):
+def cumulative_step_histogram(data, nbins=500, title='', save_fig=''):
+    if isinstance(data, pd.DataFrame):
+        data = data.cluster_size_nm
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    n, bins, patches = ax.hist(cluster_size, density=True, histtype='step', cumulative=True, bins=100)
+    n, bins, patches = ax.hist(data, density=True, histtype='step', cumulative=True, bins=nbins)
 
     ax.set_title('Cumulative step histogram', fontsize=14)
     ax.set_xlabel('Estimated domain size /nm', fontsize=14)
     ax.set_ylabel('Likelihood of occurrence', fontsize=14)
-    ax.set_xlim([0, 500])
-    ax.set_title(title + ' total # domains: ' + str(np.round(len(cluster_size), 2)))
+    ax.set_title(title + ' total # domains: ' + str(np.round(len(data), 2)))
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300)
     plt.show()
 
 
-def density_histogram(cluster_size, title='', save_fig=''):
+def density_histogram(data, title='', save_fig=''):
+    if isinstance(data, pd.DataFrame):
+        data = data.cluster_size_nm
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    n, bins, patches = ax.hist(cluster_size, density=True, bins=80)
+    n, bins, patches = ax.hist(data, density=True, bins=80)
 
     ax.set_title('Histogram', fontsize=14)
     ax.set_xlabel('Estimated domain size /nm', fontsize=14)
     ax.set_ylabel('Frequency', fontsize=14)
-    ax.set_xlim([0, 100])
-    ax.set_title(title + ' total # domains: ' + str(np.round(len(cluster_size), 2)))
+    ax.set_xlim([0, 80])
+    ax.set_title(title + ' total # domains: ' + str(np.round(len(data), 2)))
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300)
     plt.show()
@@ -204,7 +175,7 @@ def get_average_bin(bins):
     return np.array(x)
 
 
-def area_distribution(data, n_bins=30):
+def area_distribution(data, n_bins=80):
     n, bins = np.histogram(data, bins=n_bins)
 
     x = get_average_bin(bins)
@@ -212,8 +183,6 @@ def area_distribution(data, n_bins=30):
     area = area / np.sum(area) * 100
 
     return x, area
-
-# Code below still needs troubleshooting, I think it's because it's meant to work for multiple datasets
 
 
 def plot_area_distribution(data, n_bins=80, save_fig='', title='', fit=False):
@@ -246,3 +215,5 @@ def gaussian(x, amplitude, mean, stddev):
 
 def make_label(system, popt):
     return system + '\n [Fit: μ = ' + str(popt[1]) + ', σ = ' + str(popt[2]) + ']'
+
+

@@ -163,8 +163,9 @@ def get_datacube(img_gpu, angles, step_size, selected_filter, bandpass, N, M, dx
         col = 0
 
         for j in range(N, n + 1, step_size):
-            mini = normalize_tensor(img_gpu[i0:i, j0:j])
-            fft = tensor_fft(mini * hanning_window, s=M)
+            # Normalize window signal (divide by mean and substract 1) and multiply by hanning window
+            mini = normalize_tensor(img_gpu[i0:i, j0:j]) * hanning_window
+            fft = tensor_fft(mini, s=M)
             intensity_theta = get_orientation_torch(fft, filters_tensor, device)
             datacube[row, col, :] = intensity_theta
 
@@ -342,29 +343,30 @@ def bandpass_filtering_image(img_gpu, q, q_bandwidth, dx, beta=0.1, device='cuda
     """
     Computes FT of image, multiplies by user-defined filter, and computes the inverse FT to get
     a filtered version of the image.
-    :param img_gpu: image in Torch
-    :param s: size of fourier transform
+    :param img_gpu: image in Torch. Image can be any size and function allows for m != n
     :param q: spatial frequency center
     :param q_bandwidth: bandwidth of spatial frequency filter
-    :param dx: pixel size
+    :param dx: pixel size in Angstrom/pixel
     :param beta: raised cosine beta coefficient
-    :param device: default to 'cuda
+    :param device: default to 'cuda'
     :return: inverse fourier transform of image after applying raised cosine window and bandpass filter. Torch tensor.
     """
     # Pad image if shape[0] != shape[1]
     m, n = img_gpu.shape
+
+    # Make raised cosine window
+    _, rc_window_m = raised_cosine_window_np(m, beta=beta)
+    _, rc_window_n = raised_cosine_window_np(n, beta=beta)
+    window = torch.from_numpy(np.outer(rc_window_m, rc_window_n)).to(device)   # window shape is (m, n)
+
+    # Multiply real space image by window
+    img_gpu = img_gpu * window
+
     s = max(m, n)
     if m != n:
         print('padding tensor')
         pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
         img_gpu = pad(img_gpu)
-
-    # Make raised cosine window
-    _, rc_window = raised_cosine_window_np(s, beta=beta)
-    window = torch.from_numpy(np.outer(rc_window, rc_window)).to(device)
-
-    # Multiply real space image by window
-    img_gpu = img_gpu * window
 
     # Make bandpass filter
     bp_filter = torch.from_numpy(bandpass_filter(s, q - q_bandwidth, q + q_bandwidth, dx)).to(device)
