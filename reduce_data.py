@@ -150,8 +150,8 @@ def get_datacube(img_gpu, angles, step_size, selected_filter, bandpass, N, M, dx
 
     datacube = torch.from_numpy(np.zeros((size_rows, size_cols, len(angles)))).to(device)
 
-    hanning_window = torch.from_numpy(np.outer(np.hanning(N), np.hanning(N))).to(device)
-    bandpass = torch.from_numpy(bandpass).to(device).double()
+    hanning_window = torch.from_numpy(np.outer(np.hanning(N), np.hanning(N))).to(device).float()
+    bandpass = torch.from_numpy(bandpass).to(device).float()
 
     i0 = 0
     m, n = img_gpu.shape
@@ -212,9 +212,8 @@ def gaussian_q_filter(q, sigma_q, sigma_th, M, dx):
         out.append(a * np.exp(-sub))
 
     matrix = np.array(out)
-    matrix = matrix / np.sum(matrix)
     matrix = matrix + ndimage.rotate(matrix, 180, reshape=False)
-
+    matrix = matrix / np.sum(matrix)
     return matrix
 
 
@@ -339,7 +338,7 @@ def raised_cosine_window_np(s, beta=0.2):
     return frequencies, window
 
 
-def bandpass_filtering_image(img_gpu, q, q_bandwidth, dx, beta=0.1, device='cuda'):
+def bandpass_filtering_image(img_gpu, q, q_bandwidth, dx, beta=0.1, device='cuda', plot=False):
     """
     Computes FT of image, multiplies by user-defined filter, and computes the inverse FT to get
     a filtered version of the image.
@@ -364,7 +363,7 @@ def bandpass_filtering_image(img_gpu, q, q_bandwidth, dx, beta=0.1, device='cuda
 
     s = max(m, n)
     if m != n:
-        print('padding tensor')
+        # print('padding tensor to match row and col size ...')
         pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
         img_gpu = pad(img_gpu)
 
@@ -373,9 +372,10 @@ def bandpass_filtering_image(img_gpu, q, q_bandwidth, dx, beta=0.1, device='cuda
     # Shift DC component to edges and reshape for broad casting with fft_gpu
     bp_filter = tensor_shift_fft(bp_filter).reshape(s, s, 1).double()
 
-    plt.imshow(bp_filter[:, :, 0], cmap='gray')
-    plt.title('Bandpass filter of {0}nm feature'.format(np.round(2 * np.pi / q / 10, 2)))
-    plt.show()
+    if plot:
+        plt.imshow(bp_filter[:, :, 0], cmap='gray')
+        plt.title('Bandpass filter of {0}nm feature'.format(np.round(2 * np.pi / q / 10, 2)))
+        plt.show()
 
     # Do FFT of img_gpu
     fft_gpu = torch.rfft(img_gpu, 2, normalized=False, onesided=False)
