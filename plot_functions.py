@@ -22,7 +22,7 @@ def fft(ft, M, q_contour_list=[], size=10, dx=1.924, color='blue', save_fig='', 
         for q in q_contour_list:
             f_pixels = reduce.get_q_pixels(q, M, dx)
             ax.add_patch(plt.Circle(((M-1) / 2, (M-1) / 2), f_pixels, facecolor='none',
-                                    edgecolor=color, alpha=alpha, linewidth=1, linestyle=':'))
+                                    edgecolor=color, alpha=alpha, linewidth=2, linestyle=':'))
             ax.annotate(str(np.round(q, 2)), xy=(M/2, M/2 + f_pixels), color=color, alpha=alpha, fontsize=12)
 
         ax.plot()  # Causes an auto scale update.
@@ -30,8 +30,13 @@ def fft(ft, M, q_contour_list=[], size=10, dx=1.924, color='blue', save_fig='', 
     else:
         q_max = np.pi / dx
         ax.imshow(ft, cmap='gray', extent=[-q_max, q_max, -q_max, q_max], vmax=np.percentile(ft, 99))
-        ax.set_xlabel('q / ${Å^{-1}}$', fontsize=18)
-        ax.set_ylabel('q / ${Å^{-1}}$', fontsize=18)
+        ax.set_xlabel('q / ${Å^{-1}}$', fontsize=22)
+        ax.set_ylabel('q / ${Å^{-1}}$', fontsize=22)
+
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.xlim([-1, 1])
+    plt.ylim([-1, 1])
 
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300)
@@ -61,8 +66,10 @@ def hrtem(img, size=15, gamma=1, vmax=0, colorbar=False, dx=1.924, save_fig='', 
         vmax = np.percentile(gamma_corrected, 99)
 
     plt.imshow(gamma_corrected, extent=[0, x_size, 0, y_size], cmap='gray', vmax=vmax)
-    plt.xlabel('distance / nm', fontsize=18)
-    plt.ylabel('distance / nm', fontsize=18)
+    plt.xlabel('distance / nm', fontsize=22)
+    plt.ylabel('distance / nm', fontsize=22)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
 
     if colorbar:
         plt.colorbar()
@@ -122,8 +129,11 @@ def intensity_q_lineout(x, y, q_range=[0, 1.5], save_fig='', show=True):
     plt.plot(x, y, linewidth=0.2, color='black')
     plt.yscale('log')
     plt.xlim([0, 1.6])
-    plt.xlabel('q / Å$^{-1}$', fontsize=14)
-    plt.ylabel('Counts / a.u.', fontsize=14)
+    plt.ylim([1e-3, 5e-2])
+    plt.xlabel('q / Å$^{-1}$', fontsize=22)
+    plt.ylabel('Counts / a.u.', fontsize=22)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
     plt.xlim(q_range)
     plt.autoscale(axis='y')
     if save_fig:

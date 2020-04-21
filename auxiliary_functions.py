@@ -18,7 +18,7 @@ def read_tif(fn, gray=True):
     f = lambda gray: 'grayscale' if gray else 'color'
 
     img = io.imread(fn, as_gray=gray)
-    print('Opened TIF {0} image of shape: {1}'.format(f(gray), img.shape))
+    # print('Opened TIF {0} image of shape: {1}'.format(f(gray), img.shape))
 
     return img.astype('float64')
 

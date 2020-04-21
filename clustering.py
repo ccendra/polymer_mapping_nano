@@ -157,12 +157,16 @@ def point_belongs_to_cluster(value, x_coords, y_coords, theta_list, threshold, r
     return False
 
 
-def plot_cluster_map(output, angles, xlength, ylength):
+def plot_cluster_map(output, angles, xlength, ylength, save_fig=''):
 
     cmap = colors.ListedColormap(plot.get_colors(angles + 90))
     plt.figure(figsize=(10, 10))
     for i in range(output.shape[2]):
         plt.imshow(output[:, :, i], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
+    plt.xticks([])
+    plt.yticks([])
+    if save_fig:
+        plt.savefig(save_fig + '.png', dpi=300, transparent=True)
     plt.show()
 
 

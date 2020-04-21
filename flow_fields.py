@@ -914,8 +914,10 @@ def plot_graded_lines(trimmed_lines, red, green, blue, alpha, width):
     ax.add_collection(line_plot)
     plt.autoscale(enable=True, axis='both')
 
-    plt.xlabel('distance / nm')
-    plt.ylabel('distance / nm')
+    # plt.xlabel('distance / nm', fontsize=14)
+    # plt.ylabel('distance / nm', fontsize=14)
+    plt.xticks([])
+    plt.yticks([])
     # plt.autoscale(enable=True, axis='x')
 
 
