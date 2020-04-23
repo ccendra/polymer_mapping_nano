@@ -59,29 +59,30 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
 
     for row in range(m):
         if row % 10 == 0:
-            print('row: ', row)
+            print('     ...Row: ', row)
         for col in range(n):
             for i in range(input_counter[row, col]):
                 theta = input_array[row, col, i]
                 if input_counter[row, col] > 0:
-                    theta_list, x_coords, y_coords = try_forming_cluster(input_array, input_counter, theta, threshold,
+                    theta_array, x_coords, y_coords = try_forming_cluster(input_array, input_counter, theta, threshold,
                                                                          row, col, max_separation)
                     # Determine if found cluster is large enough to be considered a cluster. If yes, save it in outputs.
                     if len(x_coords) >= min_cluster_size:
                         cluster_map[x_coords, y_coords, input_counter[x_coords, y_coords]-1] = cluster_number
-                        output[x_coords, y_coords, cluster_number] = theta_list
+                        output[x_coords, y_coords, cluster_number] = theta_array
+                        median_theta = np.median(theta_array)
                         cluster_properties[cluster_number] = \
-                            {'median_theta': np.median(theta_list), 'stdev_theta': np.std(theta_list),
-                             'number_pixels': len(x_coords), 'theta_list': theta_list}
+                            {'median_theta': median_theta, 'MAD_theta': np.median(np.abs(theta_array - median_theta)),
+                             'number_pixels': len(x_coords)}
                         cluster_number += 1
                         input_counter[x_coords, y_coords] -= 1
                         num_pixels.append(len(x_coords))
 
     output = output[:, :, :cluster_number]
-    print('formed {0} clusters'.format(cluster_number))
+    print('     ...Formed {0} clusters'.format(cluster_number))
     if cluster_number > 0:
-        print('Mean size of clusters is {0} pixels'.format(np.round(np.mean(num_pixels), 2)))
-    print('clustering time(s): ', np.round((time.time() - start_time), 1))
+        print('     ...Mean size of clusters is {0} pixels'.format(np.round(np.mean(num_pixels), 2)))
+    print('     ...Clustering time(s): ', np.round((time.time() - start_time), 1))
 
     return cluster_map, output, cluster_properties
 
@@ -157,17 +158,20 @@ def point_belongs_to_cluster(value, x_coords, y_coords, theta_list, threshold, r
     return False
 
 
-def plot_cluster_map(output, angles, xlength, ylength, save_fig=''):
+def plot_cluster_map(output, angles, xlength, ylength, save_fig='', show_plot=False):
 
     cmap = colors.ListedColormap(plot.get_colors(angles + 90))
-    plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(10, 10))
     for i in range(output.shape[2]):
         plt.imshow(output[:, :, i], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
-    plt.xticks([])
-    plt.yticks([])
+    # plt.xticks([])
+    # plt.yticks([])
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300, transparent=True)
-    plt.show()
+    if show_plot:
+        plt.show()
+    else:
+        plt.close(fig)
 
 
 def cumulative_step_histogram(cluster_size, title='', save_fig=''):

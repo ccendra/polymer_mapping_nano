@@ -67,9 +67,10 @@ def correct_data(data, x_drift, y_drift, max_drift_allowed, img_size, save_array
     return data_corrected
 
 
-def plot_2d_drift(x_drift, y_drift, dx=1.924, lines=False, save_fig=''):
+def plot_2d_drift(x_drift, y_drift, dx=1.924, lines=False, save_fig='', show_plot=True):
     n_frames = len(x_drift)
-    plt.figure(figsize=(5, 4))
+
+    fig = plt.figure(figsize=(5, 4))
     plt.scatter(x_drift * dx, y_drift * dx, s=20, c=np.arange(n_frames))
     range = [np.max(np.abs(x_drift)), np.max(np.abs(y_drift))]
     range_max = max(range) * dx * 1.3
@@ -82,8 +83,11 @@ def plot_2d_drift(x_drift, y_drift, dx=1.924, lines=False, save_fig=''):
     plt.ylabel('Image drift in ȳ / Å', fontsize=14)
     if save_fig:
         plt.savefig(save_fig + '_2d_drift.png', dpi=300, bbox_inches='tight')
-    plt.show()
 
+    if show_plot:
+        plt.show()
+    else:
+        plt.close(fig)
 
 def complex_fft(tensor, s=5000, normalize=False):
     """Returns powder spectra of 2D tensor (image) using PyTorch implementation.

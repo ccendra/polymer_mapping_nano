@@ -5,7 +5,7 @@ from matplotlib import colors
 import numpy as np
 
 
-def fft(ft, M, q_contour_list=[], size=10, dx=1.924, color='blue', save_fig='', show=False, alpha=0.5):
+def fft(ft, M, q_contour_list=[], size=10, dx=1.924, color='blue', save_fig='', show_plot=False, alpha=0.5):
     """Plots Fourier transform and optionally radial contours of q space.
     Arguments:
         ft: fourier transform numpy array. If using pyTorch tensor, must be send to cpu and converted to numpy.
@@ -40,11 +40,13 @@ def fft(ft, M, q_contour_list=[], size=10, dx=1.924, color='blue', save_fig='', 
 
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300)
-    if show:
+    if show_plot:
         plt.show()
+    else:
+        plt.close(fig)
 
 
-def hrtem(img, size=15, gamma=1, vmax=0, colorbar=False, dx=1.924, save_fig='', show=False):
+def hrtem(img, size=15, gamma=1, vmax=0, colorbar=False, dx=1.924, save_fig='', show_plot=False):
     """Plots 2D TEM image in gray scale.
     Arguments:
         img: 2D numpy array
@@ -55,7 +57,7 @@ def hrtem(img, size=15, gamma=1, vmax=0, colorbar=False, dx=1.924, save_fig='', 
         dx:
         save_fig:
     """
-    plt.figure(figsize=(size, size))
+    fig = plt.figure(figsize=(size, size))
 
     gamma_corrected = exposure.adjust_gamma(img, gamma)
     x_size = img.shape[1] * dx/10
@@ -75,8 +77,10 @@ def hrtem(img, size=15, gamma=1, vmax=0, colorbar=False, dx=1.924, save_fig='', 
         plt.colorbar()
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=600)
-    if show:
+    if show_plot:
         plt.show()
+    else:
+        plt.close(fig)
 
 
 def color_by_angle(theta):
@@ -106,25 +110,27 @@ def get_colors(angles):
     return output
 
 
-def plot_orientation_map(orientation_map, angles, size=10, title='', save_fig='', show=True):
+def plot_orientation_map(orientation_map, angles, size=10, title='', save_fig='', show_plot=True):
     """Plots orientation map using a circular color palette to describe angular orientation.
     Arguments:
         """
     cmap = colors.ListedColormap(get_colors(angles + 90))
 
-    plt.figure(figsize=(size, size))
+    fig = plt.figure(figsize=(size, size))
     plt.imshow(orientation_map, cmap=cmap)
     # plt.colorbar()
     if title:
         plt.title(title)
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300)
-    if show:
+    if show_plot:
         plt.show()
+    else:
+        plt.close(fig)
 
 
-def intensity_q_lineout(x, y, q_range=[0, 1.5], save_fig='', show=True):
-    plt.figure(figsize=(8,5))
+def intensity_q_lineout(x, y, q_range=[0, 1.5], save_fig='', show_plot=True):
+    fig = plt.figure(figsize=(8,5))
     plt.scatter(x, y, s=0.5, color='blue')
     plt.plot(x, y, linewidth=0.2, color='black')
     plt.yscale('log')
@@ -138,7 +144,9 @@ def intensity_q_lineout(x, y, q_range=[0, 1.5], save_fig='', show=True):
     plt.autoscale(axis='y')
     if save_fig:
         plt.savefig(save_fig + '.png', bbox_inches='tight', dpi=300)
-    if show:
+    if show_plot:
         plt.show()
+    else:
+        plt.close(fig)
 
 

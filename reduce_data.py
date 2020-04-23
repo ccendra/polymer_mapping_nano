@@ -181,7 +181,7 @@ def get_datacube(img_gpu, angles, step_size, selected_filter, bandpass, N, M, dx
         i0 += step_size
         row += 1
 
-    print('Processing time to get 4D datacube [seconds]: ' + str(time.time() - start_time))
+    print('     ...Processing time to get 4D datacube [seconds]: ' + str(time.time() - start_time))
 
     return datacube
 
