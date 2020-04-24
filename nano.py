@@ -215,7 +215,8 @@ class Nano(object):
             uy = self.y_drift[i]
             if np.abs(ux) <= max_drift_allowed and np.abs(uy) <= max_drift_allowed:
                 data_corrected[ct, (padding - ux):-(padding + ux), (padding - uy):-(padding + uy)] = data[i, :m, :n]
-                data_corrected_bp_filtered[ct, (padding - ux):-(padding + ux), (padding - uy):-(padding + uy)] = self.data[i, :m, :n]
+                data_corrected_bp_filtered[ct, (padding - ux):-(padding + ux), (padding - uy):-(padding + uy)] = \
+                                                                                                self.data[i, :m, :n]
                 ct += 1
 
         size = padding + max_drift_allowed
