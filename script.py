@@ -23,15 +23,15 @@ params['size_fft_full'] = 4096
 params['gamma_images'] = 0.75
 params['show_figures'] = False ## Default is True
 
-# params['subregion'] = 1060
-# params['subregion_s0'] = 1040
+params['subregion'] = 1060
+params['subregion_s0'] = 1040
 
 params['plot_color'] = 'red'
-params['output_folder'] = '/home/camila/hrtem_python_packages/branch_definingNanoClass/test_large/donor/'
+params['output_folder'] = '/home/camila/hrtem_python_packages/branch_definingNanoClass/test/donor/'
 params['q_center'] = 0.29
 
 threshold = 5
-min_cluster_size = 3
+min_cluster_size = 10
 max_separation = 2.5
 
 donor = nano.Nano(params)

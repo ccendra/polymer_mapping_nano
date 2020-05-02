@@ -21,12 +21,13 @@ device = torch.device('cuda')
 
 class Nano(object):
     def __init__(self, params):
+        print('Creating object of class Nano.')
+
         ###############################################################################################################
         # Load initial parameters
         self.input_folder = params['input_folder']
         self.filename = params['filename']
         self.output_folder = params['output_folder']
-        self.save_figures = params['save_figures']
 
         self.dx = params['dx']
         self.N = params['N']
@@ -48,18 +49,19 @@ class Nano(object):
         self.subregion_s0 = params['subregion_s0'] if 'subregion_s0' in params.keys() else 0
         self.plot_color = params['plot_color'] if 'plot_color' in params.keys() else 'black'
         self.show_figures = params['show_figures'] if 'show_figures' in params.keys() else True
+        self.save_figures = params['save_figures'] if 'show_figures' in params.keys() else False
         self.perpendicular = params['peaks_perpendicular'] if 'peaks_perpendicular' in params.keys() else True
         self.colored_lines = params['colored_lines'] if 'colored_lines' in params.keys() else False
 
-
         ###############################################################################################################
         # Load raw data
+        # Returns tensor in CPU with raw data
         self.data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
-        self.initial_visualization(plot_lineout=False)
-        # Pre-process raw data and convert to bandpass filtered data frames
-        # self.data = raw_data_preprocesing(self.q_center, self.bandwidth_q, self.dx)
+        # NOTE: during computations with raw data using the various methods described below, send data to GPU before
+        # computation and then retrieve to CPU. This has to be done in order to save memory in GPU.
+
         ###############################################################################################################
-        # Initialization of parameters
+        # Initialization of object variables (to be calculated later on)
         self.x_drift, self.y_drift = np.zeros(self.data.shape[0]), np.zeros(self.data.shape[0]) # for drift analysis
         self.datacube = None
         self.peaks_matrix = None
@@ -67,13 +69,23 @@ class Nano(object):
         self.cluster_output=None
         self.cluster_properties = {}
 
+    ###################################################################################################################
+    # Class Nano Methods
 
     def initial_visualization(self, plot_lineout=True):
+        """ Perfoms initial visualization of raw data prior to performing any transformations. Method stacks a
+        pre-determined number of raw frames and plots stacked image, FFT, and azimuthally integrated powder lineout
+        (optional).
+        :param plot_lineout: whether to compute azimuthally integrated powder spectra (this is a medium expensive
+        computation in GPU). Default is True.
+        """
         print('\n...Performing initial visualizations \n '
               'Note: transformations here are temporary and only for visualization purposes.')
-        # Stack data
-        # stacked_data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
-        stacked_data = torch.from_numpy(self.data).to(device)
+        if not self.data.is_cuda:
+            # Send data to GPU
+            stacked_data = self.data.to(device)
+
+        # Stack n first frames of data.
         stacked_data = torch.sum(stacked_data[:self.preliminary_num_frames, :, :], dim=0)
         print('     ...The first {0} image frames have been stacked and image size is: {1}'.format(self.preliminary_num_frames,
                                                                                            stacked_data.shape))
@@ -85,36 +97,42 @@ class Nano(object):
         else:
             save_fig = ['', '', '']
 
-        #### Plot data
         # Plot HRTEM
         plot.hrtem(stacked_data.cpu().numpy(), size=10, gamma=self.gamma_images, vmax=0,
                    colorbar=False, dx=self.dx, save_fig=save_fig[0], show_plot=self.show_figures)
-        # Plot FFT
+
+        # Get FFT (using GPU)
         img_fft_gpu = reduce.tensor_fft(stacked_data, self.size_fft_full)
         plot.fft(img_fft_gpu.cpu(), self.size_fft_full, q_contour_list=[], dx=self.dx,
                  save_fig=save_fig[1], show_plot=self.show_figures)
-        # Plot azimuthally integrated powder lineout
+
+        # Calculate azimuthally integrated powder lineout (using GPU)
         if plot_lineout:
             q_increments = 0.005  # Can be increased to 0.01 for coarser (but faster) calculation
             q_bandwidth = 0.005   # Can be increased to 0.01 for coarser (but faster) calculation
             x_powder, y_powder = reduce.extract_intensity_q_lineout(img_fft_gpu, q_increments, q_bandwidth, self.dx)
-            plot.intensity_q_lineout(x_powder, y_powder, save_fig=save_fig[2], show_plot=self.show_figures)
+        plot.intensity_q_lineout(x_powder, y_powder, save_fig=save_fig[2], show_plot=self.show_figures)
 
 
-    def raw_data_processing(self):
+    def bandpass_filter_data(self):
+        """
+        Apply bandpass filter to all frames in raw data. Computes stack of banpass filtered real space frames and
+        stores it in object.data variable.
+        """
         print('\n...Filtering raw data with bandpass filter')
         # Send raw data to GPU
-        data = torch.from_numpy(self.data).to(device)
-        n_frames, m, n = data.shape
+        data = self.data.to(device)
 
         # Make raised cosine window
+        n_frames, m, n = data.shape
         _, rc_window_m = reduce.raised_cosine_window_np(m, beta=0.1)
         _, rc_window_n = reduce.raised_cosine_window_np(n, beta=0.1)
         window = torch.from_numpy(np.outer(rc_window_m, rc_window_n)).to(device)  # window shape is (m, n)
 
+        # Apply raised cosine window to 3D data
         data = data * torch.reshape(window, (1, m, n)).double()
         window = window.cpu()
-        del window
+        # del window
 
         # Pad image if m != n (case for full images)
         s = max(m, n)
@@ -122,22 +140,24 @@ class Nano(object):
             pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
             data = pad(data)
 
-        # Get bandpass filtered image
-        print('   ...Applying bandpass filter to all frames in image')
-
         # Apply bandpass filter to each individual frame
+        print('   ...Applying bandpass filter to all frames in image')
         for i in range(n_frames):
             data[i, :, :] = reduce.bandpass_filtering_image(data[i, :, :], self.q_center,
                                                             self.bandwidth_q, self.dx, beta=0.1)
+        # Remove padding
         data = data[:, :m, :n]
+        # Send data back to CPU
         self.data = data.cpu()
         print('   ...Data has been modified to bandpass filtered images and has shape: {0}'.format(data.shape))
 
 
     def stack_analysis(self, plot_fft=False):
         print('\n...Analyzing full-stack behavior')
-        # Send data to GPU
-        self.data = self.data.to(device)
+        if not self.data.is_cuda:
+            # Send data to GPU
+            self.data = self.data.to(device)
+
         n_frames, m, n = self.data.shape
         s = max(m, n)
 
@@ -238,8 +258,26 @@ class Nano(object):
             print('     ...Drift corrected image frames have been saved.')
 
 
-    def reduce_data(self, plot_frequency=0, save_datacube=True):
+    def reduce_data(self, number_frames=None, plot_frequency=0, save_datacube=True):
+        print('\nPerforming data reduction.')
+
+        if not self.data.is_cuda:
+            self.data = self.data.to(device)
+
+        # Stack frames and account for different situations
+        if len(self.data.shape) == 3:
+            if number_frames:
+                # Case where we want to stack a select number of frames. This happens when there was no drift
+                # correction or if want to stack fewer frames than the drift-corrected data.
+                print('     ...Stacking first {0} frames'.format(number_frames))
+                self.data = torch.sum(self.data[:number_frames, :, :], dim=0)
+            else:
+                print('     ...Stacking all {0} frames'.format(self.data.shape[0]))
+                # Stack all frames together
+                self.data = torch.sum(self.data, dim=0)
+
         print('\n...Getting datacube.')
+        # Getting filters (bandpass and gaussian, then combine)
         gaussian_filter = reduce.gaussian_q_filter(self.q_center, self.sigma_q, self.sigma_th, self.M, self.dx)
         bandpass_filter = reduce.bandpass_filter(self.M, self.q_center - self.bandwidth_q,
                                                  self.q_center + self.bandwidth_q, self.dx)
@@ -258,20 +296,20 @@ class Nano(object):
         else:
             plt.close(fig)
 
-        if len(self.data.shape) == 3:
-            self.data = torch.sum(self.data, dim=0)
-
+        # Get datacube
         self.datacube = reduce.get_datacube(self.data, self.angles, self.step_size_pixels,
                                              selected_filter, bandpass_filter, self.N, self.M,
                                              dx=self.dx, plot_freq=plot_frequency, device=device)
 
+        # Send datacube and data back to CPU to save GPU memory
         self.datacube = self.datacube.cpu().numpy()
         self.data = self.data.cpu()
+
         if save_datacube:
             np.save(self.output_folder + 'datacube.npy', self.datacube)
 
 
-    def find_peaks(self, background_threshold=None, plot_frequency=0):
+    def find_peaks(self, plot_frequency=0):
         ### Define way to discern background from peaks.
         # Can change following function based on preference (i.e. 50th percentile, 1.5 * np.min(y), np.mean(y))
         def threshold(y):
@@ -279,13 +317,10 @@ class Nano(object):
             Can change functionality as desired.
             This function is passed as an argument to peaks.find_datacube_peaks()
             """
-            return np.percentile(y, 95)
-
-        if background_threshold is None:
-            background_threshold = threshold
+            return np.percentile(y, 90)
 
         print('\n...Finding peaks in datacube')
-        peaks_matrix, _ = peaks.find_datacube_peaks(self.datacube, background_threshold, width=10,
+        peaks_matrix, _ = peaks.find_datacube_peaks(self.datacube, threshold, width=10,
                                                           plot_freq=plot_frequency)
         np.save(self.output_folder + 'peaks_matrix.npy', peaks_matrix)
 
@@ -338,10 +373,10 @@ def read_raw_data(input_folder, filename, subregion=None, s0=0):
     fn = input_folder + filename
     raw_data = None
     if file_type == 'mrc':
-        print('...Opening .mrc file')
+        print('\n...Opening .mrc file')
         raw_data = aux.read_mrc(fn)
     elif file_type == 'tif':
-        print('...Opening .tif file')
+        print('\n...Opening .tif file')
         raw_data = aux.read_tif(fn)
     else:
         print('Invalid file type. Accepted files are either .mrc or .tif')
@@ -349,7 +384,7 @@ def read_raw_data(input_folder, filename, subregion=None, s0=0):
     if subregion:
         raw_data = raw_data[:, s0:subregion+s0, s0:subregion+s0]
 
-    return raw_data
+    return torch.from_numpy(raw_data)
 
 #
 # def raw_data_preprocesing(data, q_center, bandwidth_q, dx):
