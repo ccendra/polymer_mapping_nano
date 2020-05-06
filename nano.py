@@ -56,13 +56,14 @@ class Nano(object):
         ###############################################################################################################
         # Load raw data
         # Returns tensor in CPU with raw data
-        self.data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
+        self.data_frames = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
         # NOTE: during computations with raw data using the various methods described below, send data to GPU before
         # computation and then retrieve to CPU. This has to be done in order to save memory in GPU.
 
         ###############################################################################################################
         # Initialization of object variables (to be calculated later on)
-        self.x_drift, self.y_drift = np.zeros(self.data.shape[0]), np.zeros(self.data.shape[0]) # for drift analysis
+        self.x_drift, self.y_drift = np.zeros(self.data_frames.shape[0]), np.zeros(self.data_frames.shape[0]) # for drift analysis
+        self.data_stacked = None
         self.datacube = None
         self.peaks_matrix = None
         self.cluster_map = None
@@ -81,9 +82,9 @@ class Nano(object):
         """
         print('\n...Performing initial visualizations \n '
               'Note: transformations here are temporary and only for visualization purposes.')
-        if not self.data.is_cuda:
+        if not self.data_frames.is_cuda:
             # Send data to GPU
-            stacked_data = self.data.to(device)
+            stacked_data = self.data_frames.to(device)
 
         # Stack n first frames of data.
         stacked_data = torch.sum(stacked_data[:self.preliminary_num_frames, :, :], dim=0)
@@ -117,11 +118,11 @@ class Nano(object):
     def bandpass_filter_data(self):
         """
         Apply bandpass filter to all frames in raw data. Computes stack of banpass filtered real space frames and
-        stores it in object.data variable.
+        stores it in object.data_frames variable.
         """
         print('\n...Filtering raw data with bandpass filter')
         # Send raw data to GPU
-        data = self.data.to(device)
+        data = self.data_frames.to(device)
 
         # Make raised cosine window
         n_frames, m, n = data.shape
@@ -131,8 +132,8 @@ class Nano(object):
 
         # Apply raised cosine window to 3D data
         data = data * torch.reshape(window, (1, m, n)).double()
-        window = window.cpu()
-        # del window
+        # window = window.cpu()
+        del window
 
         # Pad image if m != n (case for full images)
         s = max(m, n)
@@ -148,30 +149,30 @@ class Nano(object):
         # Remove padding
         data = data[:, :m, :n]
         # Send data back to CPU
-        self.data = data.cpu()
+        self.data_frames = data.cpu()
         print('   ...Data has been modified to bandpass filtered images and has shape: {0}'.format(data.shape))
 
 
     def stack_analysis(self, plot_fft=False):
         print('\n...Analyzing full-stack behavior')
-        if not self.data.is_cuda:
+        if not self.data_frames.is_cuda:
             # Send data to GPU
-            self.data = self.data.to(device)
+            self.data_frames = self.data_frames.to(device)
 
-        n_frames, m, n = self.data.shape
+        n_frames, m, n = self.data_frames.shape
         s = max(m, n)
 
         # Pad image if m != n (case for full images)
         if m != n:
             pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
-            self.data = pad(self.data)
-            # print('Data has temporarily been padded to shape: ', self.data.shape)
+            self.data_frames = pad(self.data_frames)
+            # print('Data has temporarily been padded to shape: ', self.data_frames.shape)
 
         print('     ...Getting integrated powder intensities vs. frame number.')
         fft_integrated_intensity = torch.zeros(n_frames)
         for i in range(n_frames):
             # Do Fourier transform of bandpass filtered image
-            frame_fft_gpu = reduce.tensor_fft(self.data[i, :, :], s)
+            frame_fft_gpu = reduce.tensor_fft(self.data_frames[i, :, :], s)
             if plot_fft:
                 plot.fft(frame_fft_gpu.cpu(), s, q_contour_list=[], size=5, show=True)
             # Store integrated powder spectrum at bandwidth q
@@ -189,7 +190,7 @@ class Nano(object):
             plt.close(fig)
 
         print('     ...Tracking drift between frames.')
-        self.x_drift, self.y_drift = drift.track_drift(self.data, s, verbose=False)
+        self.x_drift, self.y_drift = drift.track_drift(self.data_frames, s, verbose=False)
 
         fig = plt.figure()
         plt.scatter(np.arange(n_frames), self.x_drift, color=self.plot_color)
@@ -216,12 +217,21 @@ class Nano(object):
         drift.plot_2d_drift(self.x_drift, self.y_drift, dx=self.dx, lines=False,
                             save_fig=self.output_folder + 'stack_analysis_2D_drift', show_plot=self.show_figures)
 
+        # Send data back to CPU
+        self.data_frames = self.data_frames.cpu()
 
-    def correct_drift(self, max_drift_allowed, save_array=True):
+
+    def correct_drift(self, max_drift_allowed, first_frame, last_frame, save_array=True):
         print('\n...Correcting drift between frames. Maximum drift allowed is {0} pixels in either '
               'x or y directions.'.format(max_drift_allowed))
+
+        if not self.data_frames.is_cuda:
+            # Send data to GPU
+            self.data_frames = self.data_frames[first_frame:last_frame, :, :].to(device)
+
         # Reading raw data again to illustrate behavior post-drift
         data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
+        data = data[first_frame:last_frame, :, :]
 
         n_frames, m, n = data.shape
         padding = max_drift_allowed + 1
@@ -236,12 +246,13 @@ class Nano(object):
             if np.abs(ux) <= max_drift_allowed and np.abs(uy) <= max_drift_allowed:
                 data_corrected[ct, (padding - ux):-(padding + ux), (padding - uy):-(padding + uy)] = data[i, :m, :n]
                 data_corrected_bp_filtered[ct, (padding - ux):-(padding + ux), (padding - uy):-(padding + uy)] = \
-                                                                                                self.data[i, :m, :n]
+                                                                                                self.data_frames[i, :m, :n]
                 ct += 1
 
         size = padding + max_drift_allowed
         data_corrected = data_corrected[:ct, size:-size, size:-size]
-        self.data = data_corrected_bp_filtered[:ct, size:-size, size:-size]
+        # Send data back to CPU
+        self.data_frames = data_corrected_bp_filtered[:ct, size:-size, size:-size].cpu()
         print('     ...Data has been drift-corrected and new shape is: ', data_corrected.shape)
 
         # Overwrite with stacked data for image
@@ -258,23 +269,52 @@ class Nano(object):
             print('     ...Drift corrected image frames have been saved.')
 
 
+    def select_frames(self, frames):
+        if not self.data_frames.is_cuda:
+            # Send data to GPU
+            self.data_frames = self.data_frames.to(device)
+
+        data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
+
+        if len(frames) == 2:
+            first_frame = frames[0]
+            last_frame = frames[1]
+            print('\n...Selecting frame stack from frame # {0} to frame # {1}'.format(first_frame, last_frame))
+            self.data_frames = self.data_frames[first_frame:last_frame, :, :]
+            data = torch.sum(data[first_frame:last_frame, :, :], dim=0)
+        else:
+            print('\n...Selecting frames {0} in stack.'.format(frames))
+            self.data_frames = self.data_frames[frames, :, :]
+            data = torch.sum(data[frames, :, :], dim=0)
+
+        # Send data back to CPU
+        self.data_frames = self.data_frames.cpu()
+
+        plot.hrtem(data.numpy(), size=10, gamma=self.gamma_images, vmax=0, colorbar=False, dx=self.dx,
+                   save_fig=self.output_folder + 'selected_stack_sum', show_plot=self.show_figures)
+
+        img_fft_gpu = reduce.tensor_fft(data, self.size_fft_full)
+        plot.fft(img_fft_gpu.cpu(), self.size_fft_full, q_contour_list=[],
+                 save_fig=self.output_folder+'selected_stack_sum_fft', show_plot=self.show_figures)
+
+
     def reduce_data(self, number_frames=None, plot_frequency=0, save_datacube=True):
         print('\nPerforming data reduction.')
 
-        if not self.data.is_cuda:
-            self.data = self.data.to(device)
+        if not self.data_frames.is_cuda:
+            self.data_frames = self.data_frames.to(device)
 
         # Stack frames and account for different situations
-        if len(self.data.shape) == 3:
+        if len(self.data_frames.shape) == 3:
             if number_frames:
                 # Case where we want to stack a select number of frames. This happens when there was no drift
                 # correction or if want to stack fewer frames than the drift-corrected data.
                 print('     ...Stacking first {0} frames'.format(number_frames))
-                self.data = torch.sum(self.data[:number_frames, :, :], dim=0)
+                self.data_stacked = torch.sum(self.data_frames[:number_frames, :, :], dim=0)
             else:
-                print('     ...Stacking all {0} frames'.format(self.data.shape[0]))
+                print('     ...Stacking all {0} frames'.format(self.data_frames.shape[0]))
                 # Stack all frames together
-                self.data = torch.sum(self.data, dim=0)
+                self.data_stacked = torch.sum(self.data_frames, dim=0)
 
         print('\n...Getting datacube.')
         # Getting filters (bandpass and gaussian, then combine)
@@ -297,30 +337,23 @@ class Nano(object):
             plt.close(fig)
 
         # Get datacube
-        self.datacube = reduce.get_datacube(self.data, self.angles, self.step_size_pixels,
-                                             selected_filter, bandpass_filter, self.N, self.M,
-                                             dx=self.dx, plot_freq=plot_frequency, device=device)
+        self.datacube = reduce.get_datacube(self.data_stacked.double(), self.angles, self.step_size_pixels,
+                                            selected_filter, self.N, self.M, dx=self.dx,
+                                            plot_freq=plot_frequency, device=device)
 
         # Send datacube and data back to CPU to save GPU memory
         self.datacube = self.datacube.cpu().numpy()
-        self.data = self.data.cpu()
+        self.data_frames = self.data_frames.cpu()
+        self.data_stacked = self.data_stacked.cpu()
 
         if save_datacube:
             np.save(self.output_folder + 'datacube.npy', self.datacube)
 
 
-    def find_peaks(self, plot_frequency=0):
-        ### Define way to discern background from peaks.
-        # Can change following function based on preference (i.e. 50th percentile, 1.5 * np.min(y), np.mean(y))
-        def threshold(y):
-            """Defines minimum threshold for prominence of peak during peak searching algorithm.
-            Can change functionality as desired.
-            This function is passed as an argument to peaks.find_datacube_peaks()
-            """
-            return np.percentile(y, 90)
+    def find_peaks(self, threshold_function, plot_frequency=0):
 
         print('\n...Finding peaks in datacube')
-        peaks_matrix, _ = peaks.find_datacube_peaks(self.datacube, threshold, width=10,
+        peaks_matrix, _ = peaks.find_datacube_peaks(self.datacube, threshold_function, width=10,
                                                           plot_freq=plot_frequency)
         np.save(self.output_folder + 'peaks_matrix.npy', peaks_matrix)
 
@@ -349,8 +382,8 @@ class Nano(object):
 
 
     def final_visualizations(self, clusters=True, director_fields=True, flow_fields=False):
-        x_length_nm = self.data.shape[1] * self.dx / 10
-        y_length_nm = self.data.shape[0] * self.dx / 10
+        x_length_nm = self.data_stacked.shape[1] * self.dx / 10
+        y_length_nm = self.data_stacked.shape[0] * self.dx / 10
         print('\n...Plotting final visualizations')
 
         if clusters:
@@ -358,6 +391,9 @@ class Nano(object):
             cluster.plot_cluster_map(self.cluster_output, self.angles, x_length_nm, y_length_nm,
                                      save_fig=self.output_folder + 'final_visualizations_cluster_map',
                                      show_plot=self.show_figures)
+
+
+
         if director_fields:
             print('     ...Plotting director fields')
             director.plot_director_field(self.peaks_matrix, self.angles, x_length_nm, y_length_nm,

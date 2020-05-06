@@ -125,7 +125,7 @@ def make_gaussian_filter_tensor(single_filter, angles, device='cuda'):
     return torch.from_numpy(filters_np).to(device)
 
 
-def get_datacube(img_gpu, angles, step_size, selected_filter, bandpass, N, M, dx=1.924, plot_freq=0, device='cuda'):
+def get_datacube(img_gpu, angles, step_size, selected_filter, N, M, dx=1.924, plot_freq=0, device='cuda'):
     """ Get intensity - theta 4D array. Saves 4D array output.
     Arguments:
         img_gpu: GPU tensor of raw image
@@ -150,8 +150,7 @@ def get_datacube(img_gpu, angles, step_size, selected_filter, bandpass, N, M, dx
 
     datacube = torch.from_numpy(np.zeros((size_rows, size_cols, len(angles)))).to(device)
 
-    hanning_window = torch.from_numpy(np.outer(np.hanning(N), np.hanning(N))).to(device).float()
-    bandpass = torch.from_numpy(bandpass).to(device).float()
+    hanning_window = torch.from_numpy(np.outer(np.hanning(N), np.hanning(N))).to(device).double()
 
     i0 = 0
     m, n = img_gpu.shape
@@ -170,9 +169,8 @@ def get_datacube(img_gpu, angles, step_size, selected_filter, bandpass, N, M, dx
             datacube[row, col, :] = intensity_theta
 
             if plot_freq != 0 and ct % plot_freq == 0:
-                fft_masked = fft * bandpass
-                subplot_mini(mini.cpu().numpy(), fft.cpu().numpy(), fft_masked.cpu().numpy(),
-                             [angles, intensity_theta], 'count = ' + str(ct), dx, save_fig='')
+                subplot_mini(mini.cpu().numpy(), fft.cpu().numpy(), [angles, intensity_theta],
+                             'count = ' + str(ct), dx, save_fig='')
 
             j0 += step_size
             ct += 1
@@ -217,7 +215,7 @@ def gaussian_q_filter(q, sigma_q, sigma_th, M, dx):
     return matrix
 
 
-def subplot_mini(image, fft_raw, fft_masked, I_vs_th, title='', dx=1.924, save_fig=''):
+def subplot_mini(image, fft_raw, I_vs_th, title='', dx=1.924, save_fig=''):
     """ Plots stack of figures to describe nano-FFT extraction process. From left to right,
     the following figures are plot: real space  nano-image, raw FFT, and filtered FFT.
     Args:
@@ -231,7 +229,7 @@ def subplot_mini(image, fft_raw, fft_masked, I_vs_th, title='', dx=1.924, save_f
     q_max = np.pi / dx
     th, I = I_vs_th[0], I_vs_th[1]
 
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
     fig.set_figheight(2)
     fig.set_figwidth(8)
     # Plot nano image
@@ -243,17 +241,13 @@ def subplot_mini(image, fft_raw, fft_masked, I_vs_th, title='', dx=1.924, save_f
     ax2.imshow(fft_raw, cmap='gray', extent=[-q_max, q_max, -q_max, q_max])
     ax2.set_title('FFT', fontsize=10)
     ax2.set_xlabel('${Å^{-1}}$')
-    # plot FFT of nanoimage
-    ax3.imshow(fft_masked, cmap='gray', extent=[-q_max, q_max, -q_max, q_max])
-    ax3.set_title('FFT masked', fontsize=10)
-    ax3.set_xlabel('${Å^{-1}}$')
     # plot I vs theta
-    ax4.scatter(th, I, s=2, color='blue')
-    ax4.set_xlabel('θ / degrees')
-    ax4.yaxis.tick_right()
-    ax4.set_ylabel('Counts / a.u. ')
-    ax4.set_xticks(np.arange(th[0], th[-1]+2, step=45))
-    ax4.yaxis.set_label_position('right')
+    ax3.scatter(th, I, s=2, color='blue')
+    ax3.set_xlabel('θ / degrees')
+    ax3.yaxis.tick_right()
+    ax3.set_ylabel('Counts / a.u. ')
+    ax3.set_xticks(np.arange(th[0], th[-1]+2, step=45))
+    ax3.yaxis.set_label_position('right')
 
     plt.show()
 
