@@ -114,7 +114,6 @@ class Nano(object):
             x_powder, y_powder = reduce.extract_intensity_q_lineout(img_fft_gpu, q_increments, q_bandwidth, self.dx)
         plot.intensity_q_lineout(x_powder, y_powder, save_fig=save_fig[2], show_plot=self.show_figures)
 
-
     def bandpass_filter_data(self):
         """
         Apply bandpass filter to all frames in raw data. Computes stack of banpass filtered real space frames and
@@ -151,7 +150,6 @@ class Nano(object):
         # Send data back to CPU
         self.data_frames = data.cpu()
         print('   ...Data has been modified to bandpass filtered images and has shape: {0}'.format(data.shape))
-
 
     def stack_analysis(self, plot_fft=False):
         print('\n...Analyzing full-stack behavior')
@@ -220,7 +218,6 @@ class Nano(object):
         # Send data back to CPU
         self.data_frames = self.data_frames.cpu()
 
-
     def correct_drift(self, max_drift_allowed, first_frame, last_frame, save_array=True):
         print('\n...Correcting drift between frames. Maximum drift allowed is {0} pixels in either '
               'x or y directions.'.format(max_drift_allowed))
@@ -268,7 +265,6 @@ class Nano(object):
             np.save(self.output_folder + 'data_frames_drift_corrected.npy', data_corrected)
             print('     ...Drift corrected image frames have been saved.')
 
-
     def select_frames(self, frames):
         if not self.data_frames.is_cuda:
             # Send data to GPU
@@ -296,7 +292,6 @@ class Nano(object):
         img_fft_gpu = reduce.tensor_fft(data, self.size_fft_full)
         plot.fft(img_fft_gpu.cpu(), self.size_fft_full, q_contour_list=[],
                  save_fig=self.output_folder+'selected_stack_sum_fft', show_plot=self.show_figures)
-
 
     def reduce_data(self, number_frames=None, plot_frequency=0, save_datacube=True):
         print('\nPerforming data reduction.')
@@ -349,7 +344,6 @@ class Nano(object):
         if save_datacube:
             np.save(self.output_folder + 'datacube.npy', self.datacube)
 
-
     def find_peaks(self, threshold_function, plot_frequency=0):
 
         print('\n...Finding peaks in datacube')
@@ -363,7 +357,6 @@ class Nano(object):
         print('     ...Maximum number of peaks per grid point: ', np.max(np.sum(peaks_matrix, axis=2)))
 
         self.peaks_matrix = peaks_matrix
-
 
     def find_clusters(self, threshold, min_cluster_size, max_separation, save_output=True):
         print('\n...Finding clusters')
@@ -380,7 +373,6 @@ class Nano(object):
         self.cluster_output = output
         self.cluster_properties = cluster_properties
 
-
     def final_visualizations(self, clusters=True, director_fields=True, flow_fields=False):
         x_length_nm = self.data_stacked.shape[1] * self.dx / 10
         y_length_nm = self.data_stacked.shape[0] * self.dx / 10
@@ -392,16 +384,12 @@ class Nano(object):
                                      save_fig=self.output_folder + 'final_visualizations_cluster_map',
                                      show_plot=self.show_figures)
 
-
-
         if director_fields:
             print('     ...Plotting director fields')
             director.plot_director_field(self.peaks_matrix, self.angles, x_length_nm, y_length_nm,
                                           perpendicular=self.perpendicular, colored_lines=self.colored_lines,
                                           save_fig=self.output_folder + 'final_visualizations_director_fields',
                                           show_plot=self.show_figures)
-
-
 
 
 def read_raw_data(input_folder, filename, subregion=None, s0=0):
