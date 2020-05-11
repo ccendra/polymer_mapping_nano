@@ -4,15 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Custom packages
-import reduce_data as reduce
-import auxiliary_functions as aux
-import plot_functions as plot
-import drift_correction as drift
-import peak_fitting as peaks
-import director_fields as director
-import flow_fields as flow
-import clustering as cluster
+# Custom packages - each performs different task
+import reduce_data as reduce    # Reduce data in fourier space and get datacube
+import auxiliary_functions as aux   # Simple auxiliary functions
+import plot_functions as plot   # Methods to plot data
+import drift_correction as drift    # Drift correction
+import peak_fitting as peaks    # Peak fitting methods
+import clustering as cluster    # Find clusters
+import director_fields as director    # Director fields visualization
+import flow_fields as flow     # Flow fields visualization
 
 # Pytorch setup
 device = torch.device('cuda')
@@ -67,7 +67,7 @@ class Nano(object):
         self.datacube = None
         self.peaks_matrix = None
         self.cluster_map = None
-        self.cluster_output=None
+        self.cluster_output = None
         self.cluster_properties = {}
 
     ###################################################################################################################
@@ -222,18 +222,19 @@ class Nano(object):
         print('\n...Correcting drift between frames. Maximum drift allowed is {0} pixels in either '
               'x or y directions.'.format(max_drift_allowed))
 
+        self.data_frames = self.data_frames[first_frame:last_frame, :, :]
         if not self.data_frames.is_cuda:
             # Send data to GPU
-            self.data_frames = self.data_frames[first_frame:last_frame, :, :].to(device)
+            self.data_frames = self.data_frames.to(device)
 
-        # Reading raw data again to illustrate behavior post-drift
+        # Reading raw data to visualize image after drift correction
         data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
         data = data[first_frame:last_frame, :, :]
 
         n_frames, m, n = data.shape
         padding = max_drift_allowed + 1
 
-        data_corrected = np.zeros((n_frames, m + 2*padding, n + 2*padding))
+        data_corrected = np.zeros((n_frames, m + 2 * padding, n + 2 * padding))
         data_corrected_bp_filtered = torch.zeros(n_frames, m + 2 * padding, n + 2 * padding).to(device)
 
         ct = 0
@@ -241,9 +242,9 @@ class Nano(object):
             ux = self.x_drift[i]
             uy = self.y_drift[i]
             if np.abs(ux) <= max_drift_allowed and np.abs(uy) <= max_drift_allowed:
-                data_corrected[ct, (padding - ux):-(padding + ux), (padding - uy):-(padding + uy)] = data[i, :m, :n]
-                data_corrected_bp_filtered[ct, (padding - ux):-(padding + ux), (padding - uy):-(padding + uy)] = \
-                                                                                                self.data_frames[i, :m, :n]
+                a, b, c, d = int(padding - ux), -int(padding + ux), int(padding - uy), -int(padding + uy)
+                data_corrected[ct, a:b, c:d] = data[i, :m, :n]
+                data_corrected_bp_filtered[ct, a:b, c:d] = self.data_frames[i, :m, :n]
                 ct += 1
 
         size = padding + max_drift_allowed
@@ -373,7 +374,7 @@ class Nano(object):
         self.cluster_output = output
         self.cluster_properties = cluster_properties
 
-    def final_visualizations(self, clusters=True, director_fields=True, flow_fields=False):
+    def final_visualizations(self, clusters=True, director_fields=True):
         x_length_nm = self.data_stacked.shape[1] * self.dx / 10
         y_length_nm = self.data_stacked.shape[0] * self.dx / 10
         print('\n...Plotting final visualizations')
@@ -387,9 +388,107 @@ class Nano(object):
         if director_fields:
             print('     ...Plotting director fields')
             director.plot_director_field(self.peaks_matrix, self.angles, x_length_nm, y_length_nm,
-                                          perpendicular=self.perpendicular, colored_lines=self.colored_lines,
-                                          save_fig=self.output_folder + 'final_visualizations_director_fields',
-                                          show_plot=self.show_figures)
+                                         perpendicular=self.perpendicular, colored_lines=self.colored_lines,
+                                         save_fig=self.output_folder + 'final_visualizations_director_fields',
+                                         show_plot=self.show_figures)
+
+    def flow_fields_visualization(self, peaks_parallel_to_chain=False, seed_density=5, bend_tolerance=20,
+                                  curve_resolution=2, preview_sparsity=20, line_spacing=1, spacing_resolution=5,
+                                  angle_spacing_degrees=10, max_overlap_fraction=0.5):
+        m, n, th = self.datacube.shape
+        k = np.min([m, n])
+
+        # Prepare intensity matrix and peaks matrix
+        intensity_matrix = self.datacube[:k, :k, :]
+        peaks_matrix_mod = self.peaks_matrix[:k, :k, :]
+
+        step_size = self.step_size_pixels * self.dx / 10
+
+        # If the diffraction peaks are perpendicular to the chain direction, rotate the matrix 90 degrees
+        prepped_intensity_matrix = flow.prepare_intensity_matrix(intensity_matrix, rotate=peaks_parallel_to_chain)
+
+        # Create line seeds at each peak
+        line_seeds = flow.seed_lines(peaks_matrix_mod, step_size, seed_density=seed_density)
+
+        # Extend line seeds to create full lines
+        propagated_lines = flow.propagate_lines(line_seeds, peaks_matrix_mod, step_size, bend_tolerance,
+                                                curve_resolution=curve_resolution, max_grid_length=100)
+
+        # Show a preview, using a subset of the propagated lines
+        # propagated_image = flow.plot_solid_lines(propagated_lines, min_length=2, sparsity=preview_sparsity)
+        #
+        # plt.xlabel('distance / nm')
+        # plt.ylabel('distance / nm')
+        # plt.savefig(self.output_folder + 'propagated_lines_preview')
+        # plt.show()
+
+        # Thin out lines, reducing overlap between lines and creating a more homogeneous line density.
+        # This prevents the illusion of high density in regions with good alignment, and makes the image more readable.
+
+        trimmed_lines = flow.trim_lines(propagated_lines, prepped_intensity_matrix.shape, step_size,
+                                        line_spacing, spacing_resolution, angle_spacing_degrees,
+                                        max_overlap_fraction=max_overlap_fraction, min_length=5, verbose=False)
+        # trimmed_image = flow.plot_solid_lines(trimmed_lines)
+        #
+        # plt.xlabel('distance / nm')
+        # plt.ylabel('distance / nm')
+        # plt.savefig(self.output_folder + 'propagated_lines_preview')
+        # plt.show()
+
+        # Add intensity data to lines
+        line_data = flow.prepare_line_data(trimmed_lines, prepped_intensity_matrix, step_size)
+        angle_data = line_data[2, :, :]
+        intensity_data = np.array(line_data[4, :, :])
+        n_dims, max_length, n_lines = line_data.shape
+
+        # Create amd Format Flow Plots
+
+        # There are many ways to format the plots.  I suggest keeping settings organized in the format below.
+        formatted_plots = []
+        # format_codes = [0, 1, 2, 3, 4]
+        format_codes = [0]
+
+        contrast = 0.1
+        gamma = 0.1
+        brightness = 1
+        for i, format_code in enumerate(format_codes):
+            if format_code == 0:
+                # Constant color, linewidth, and alpha
+                r, g, b = np.zeros((max_length, n_lines)), np.zeros((max_length, n_lines)), np.zeros(
+                    (max_length, n_lines))
+                linewidth = np.ones((max_length, n_lines)) * 0.5
+                alpha = np.ones((max_length, n_lines))
+            elif format_code == 1:
+                # Color by angle, alpha by intensity
+                r, g, b = flow.color_by_angle(angle_data)
+                linewidth = np.ones((max_length, n_lines)) * 2
+                alpha = flow.scale_values(flow.smooth(intensity_data, 9), contrast=contrast, gamma=gamma,
+                                          brightness=brightness)
+            elif format_code == 2:
+                # Solid Color, alpha by intensity
+                r, g, b = np.zeros((max_length, n_lines)), np.zeros((max_length, n_lines)), np.zeros(
+                    (max_length, n_lines))
+                linewidth = np.ones((max_length, n_lines)) * 2
+                alpha = flow.scale_values(flow.smooth(intensity_data, 9), contrast=contrast, gamma=gamma,
+                                          brightness=brightness)
+            elif format_code == 3:
+                # Color by angle, constant linewidth and alpha
+                r, g, b = flow.color_by_angle(angle_data)
+                linewidth = np.ones((max_length, n_lines))
+                alpha = np.ones((max_length, n_lines))
+            elif format_code == 4:
+                # Solid Color, alpha by intensity
+                r, g, b = np.zeros((max_length, n_lines)), np.zeros((max_length, n_lines)), np.zeros(
+                    (max_length, n_lines))
+                linewidth = flow.scale_values(flow.smooth(intensity_data, 9), contrast=contrast, gamma=gamma,
+                                              brightness=brightness)
+                alpha = np.ones((max_length, n_lines))
+
+            flow.plot_graded_lines(trimmed_lines, r, g, b, alpha, linewidth)
+            formatted_plots.append(plt.gcf())
+            #     plt.autoscale(enable=True, axis='both', tight=True)
+            plt.savefig(self.output_folder + 'flow_plots_code_' + str(i) + '.png', dpi=300)
+            plt.show()
 
 
 def read_raw_data(input_folder, filename, subregion=None, s0=0):

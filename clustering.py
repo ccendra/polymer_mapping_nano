@@ -45,9 +45,9 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
         input_counter[row, col] += 1
 
     estimation = int(m * n * 2 / min_cluster_size)
-    output = np.full(shape=(m, n, estimation), fill_value=np.nan)
+    output = np.full(shape=(estimation, m, n), fill_value=np.nan)
     # Cluster map
-    cluster_map = np.full(shape=(m, n, k), fill_value=np.nan)
+    cluster_map = np.full(shape=(k, m, n), fill_value=np.nan)
     # Dictionary to track properties for each cluster
     cluster_properties = {}
     # Tracker for cluster number
@@ -68,8 +68,8 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
                                                                          row, col, max_separation)
                     # Determine if found cluster is large enough to be considered a cluster. If yes, save it in outputs.
                     if len(x_coords) >= min_cluster_size:
-                        cluster_map[x_coords, y_coords, input_counter[x_coords, y_coords]-1] = cluster_number
-                        output[x_coords, y_coords, cluster_number] = theta_array
+                        cluster_map[input_counter[x_coords, y_coords]-1, x_coords, y_coords] = cluster_number
+                        output[cluster_number, x_coords, y_coords] = theta_array
                         median_theta = np.median(theta_array)
                         cluster_properties[cluster_number] = \
                             {'median_theta': median_theta, 'MAD_theta': np.median(np.abs(theta_array - median_theta)),
@@ -78,7 +78,7 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
                         input_counter[x_coords, y_coords] -= 1
                         num_pixels.append(len(x_coords))
 
-    output = output[:, :, :cluster_number]
+    output = output[:cluster_number, :, :]
     print('     ...Formed {0} clusters'.format(cluster_number))
     if cluster_number > 0:
         print('     ...Mean size of clusters is {0} pixels'.format(np.round(np.mean(num_pixels), 2)))
@@ -162,8 +162,8 @@ def plot_cluster_map(output, angles, xlength, ylength, save_fig='', show_plot=Fa
 
     cmap = colors.ListedColormap(plot.get_colors(angles + 90))
     fig = plt.figure(figsize=(10, 10))
-    for i in range(output.shape[2]):
-        plt.imshow(output[:, :, i], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
+    for i in range(output.shape[0]):
+        plt.imshow(output[i, :, :], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
     # plt.xticks([])
     # plt.yticks([])
     if save_fig:
@@ -182,7 +182,6 @@ def cumulative_step_histogram(cluster_size, title='', save_fig=''):
     ax.set_title('Cumulative step histogram', fontsize=14)
     ax.set_xlabel('Estimated domain size /nm', fontsize=14)
     ax.set_ylabel('Likelihood of occurrence', fontsize=14)
-    ax.set_xlim([0, 500])
     ax.set_title(title + ' total # domains: ' + str(np.round(len(cluster_size), 2)))
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300)
@@ -197,7 +196,6 @@ def density_histogram(cluster_size, title='', save_fig=''):
     ax.set_title('Histogram', fontsize=14)
     ax.set_xlabel('Estimated domain size /nm', fontsize=14)
     ax.set_ylabel('Frequency', fontsize=14)
-    ax.set_xlim([0, 100])
     ax.set_title(title + ' total # domains: ' + str(np.round(len(cluster_size), 2)))
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300)
@@ -254,3 +252,19 @@ def gaussian(x, amplitude, mean, stddev):
 
 def make_label(system, popt):
     return system + '\n [Fit: μ = ' + str(popt[1]) + ', σ = ' + str(popt[2]) + ']'
+
+
+def get_single_domain(image, mask):
+    def domain_coordinates(m):
+        rows, cols = np.where(m > 0)
+        min_row, max_row = np.min(rows), np.max(rows)
+        min_col, max_col = np.min(cols), np.max(cols)
+
+        return min_row, max_row + 1, min_col, max_col + 1
+
+    min_row, max_row, min_col, max_col = domain_coordinates(mask)
+    domain_image = image[min_row:max_row, min_col:max_col]
+    domain_mask = mask[min_row:max_row, min_col:max_col]
+
+    return domain_image, domain_mask
+

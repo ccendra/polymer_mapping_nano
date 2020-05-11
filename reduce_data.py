@@ -378,4 +378,4 @@ def bandpass_filtering_image(img_gpu, q, q_bandwidth, dx, beta=0.1, device='cuda
     ifft = torch.irfft(fft_gpu * bp_filter, 2, normalized=False, onesided=False)
     ifft = ifft + torch.abs(torch.min(ifft))  # Rescale values such that no negative intensity values
 
-    return ifft
+    return ifft[:m, :n]

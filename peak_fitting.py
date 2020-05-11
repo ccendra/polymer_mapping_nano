@@ -90,6 +90,21 @@ def find_datacube_peaks(data, threshold_function, width=1, plot_freq=100):
     return peaks_matrix, overlap_angles_list
 
 
+def find_max_peak_in_lineout(lineout, threshold, width=1):
+    th = len(lineout)
+    f = int(1.5 * th)  # Extending signal by 50%
+    I = extend_signal(lineout, f)
+    peaks_extended, properties = signal.find_peaks(I, height=threshold(I), width=1)
+    peak, _ = remove_duplicates(peaks_extended)
+
+    if len(peak) > 1:
+        peak_index = np.argmax(lineout[peak])
+        peak = peak[peak_index]
+    else:
+        peak = peak[0]
+
+    return peak
+
 def extend_signal(intensity, f):
     """
     Extends/repeats 1D signal (i.e. I vs theta) to account for peaks present in edges of signal, which peak fitting
