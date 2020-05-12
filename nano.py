@@ -114,6 +114,44 @@ class Nano(object):
             x_powder, y_powder = reduce.extract_intensity_q_lineout(img_fft_gpu, q_increments, q_bandwidth, self.dx)
         plot.intensity_q_lineout(x_powder, y_powder, save_fig=save_fig[2], show_plot=self.show_figures)
 
+<<<<<<< Updated upstream
+=======
+        del stacked_data
+
+    def bandpass_filter_data_less_memory(self):
+        """
+        Apply bandpass filter to all frames in raw data. Computes stack of banpass filtered real space frames and
+        stores it in object.data_frames variable.
+        """
+        print('\n...Filtering raw data with bandpass filter')
+
+        # Make raised cosine window
+        n_frames, m, n = self.data_frames.shape
+        _, rc_window_m = reduce.raised_cosine_window_np(m, beta=0.1)
+        _, rc_window_n = reduce.raised_cosine_window_np(n, beta=0.1)
+        window = torch.from_numpy(np.outer(rc_window_m, rc_window_n))  # window shape is (m, n)
+
+        # Pad image if m != n (case for full images)
+        s = max(m, n)
+        if m != n:
+            pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
+
+        # Apply bandpass filter to each individual frame
+        print('   ...Applying bandpass filter to all frames in image')
+        data = torch.zeros(self.data_frames.shape)
+        for i in range(n_frames):
+            frame = self.data_frames[i, :, :] * window
+            if m != n:
+                frame = pad(frame)
+            data[i, :, :] = reduce.bandpass_filtering_image(frame.to(device), self.q_center,
+                                                        self.bandwidth_q, self.dx, beta=0.1)
+        # Remove padding
+        data = data[:, :m, :n].cpu()
+        # Send data back to CPU
+        self.data_frames = data
+        print('   ...Data has been modified to bandpass filtered images and has shape: {0}'.format(data.shape))
+
+>>>>>>> Stashed changes
     def bandpass_filter_data(self):
         """
         Apply bandpass filter to all frames in raw data. Computes stack of banpass filtered real space frames and
@@ -374,7 +412,11 @@ class Nano(object):
         self.cluster_output = output
         self.cluster_properties = cluster_properties
 
+<<<<<<< Updated upstream
     def final_visualizations(self, clusters=True, director_fields=True):
+=======
+    def final_visualizations(self, clusters=True, director_fields=True, step_nm=20):
+>>>>>>> Stashed changes
         x_length_nm = self.data_stacked.shape[1] * self.dx / 10
         y_length_nm = self.data_stacked.shape[0] * self.dx / 10
         print('\n...Plotting final visualizations')
@@ -388,15 +430,27 @@ class Nano(object):
         if director_fields:
             print('     ...Plotting director fields')
             director.plot_director_field(self.peaks_matrix, self.angles, x_length_nm, y_length_nm,
+<<<<<<< Updated upstream
                                          perpendicular=self.perpendicular, colored_lines=self.colored_lines,
                                          save_fig=self.output_folder + 'final_visualizations_director_fields',
                                          show_plot=self.show_figures)
 
     def flow_fields_visualization(self, peaks_parallel_to_chain=False, seed_density=5, bend_tolerance=20,
+=======
+                                         perpendicular=self.perpendicular, step_nm=step_nm, colored_lines=self.colored_lines,
+                                         save_fig=self.output_folder + 'final_visualizations_director_fields',
+                                         show_plot=self.show_figures)
+
+    def flow_fields_visualization(self, seed_density=5, bend_tolerance=20,
+>>>>>>> Stashed changes
                                   curve_resolution=2, preview_sparsity=20, line_spacing=1, spacing_resolution=5,
                                   angle_spacing_degrees=10, max_overlap_fraction=0.5):
         m, n, th = self.datacube.shape
         k = np.min([m, n])
+<<<<<<< Updated upstream
+=======
+        peaks_parallel_to_chain = ~self.perpendicular
+>>>>>>> Stashed changes
 
         # Prepare intensity matrix and peaks matrix
         intensity_matrix = self.datacube[:k, :k, :]
