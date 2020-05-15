@@ -24,6 +24,15 @@ class Nano(object):
         print('Creating object of class Nano.')
 
         ###############################################################################################################
+        # Set optional parameters with set choice or default
+        self.gamma_images = params['gamma_images'] if 'gamma_images' in params.keys() else 1
+        self.subregion = params['subregion'] if 'subregion' in params.keys() else None
+        self.subregion_s0 = params['subregion_s0'] if 'subregion_s0' in params.keys() else 0
+        self.plot_color = params['plot_color'] if 'plot_color' in params.keys() else 'black'
+        self.show_figures = params['show_figures'] if 'show_figures' in params.keys() else True
+        self.save_figures = params['save_figures'] if 'show_figures' in params.keys() else False
+        self.perpendicular = params['peaks_perpendicular'] if 'peaks_perpendicular' in params.keys() else True
+
         # Load initial parameters
         self.input_folder = params['input_folder']
         self.filename = params['filename']
@@ -33,7 +42,7 @@ class Nano(object):
         self.N = params['N']
         self.M = params['M']
         self.step_size_pixels = params['step_size_pixels']
-        self.angles = np.arange(-90, 90, step=1)
+        self.angles = np.arange(-90, 90, step=1) if self.perpendicular else np.arange(0, 180, step=1)
 
         self.q_center = params['q_center']
         self.sigma_q = params['sigma_q']
@@ -43,15 +52,7 @@ class Nano(object):
         self.preliminary_num_frames = params['preliminary_num_frames']
         self.size_fft_full = params['size_fft_full']
 
-        # Set optional parameters with set choice or default
-        self.gamma_images = params['gamma_images'] if 'gamma_images' in params.keys() else 1
-        self.subregion = params['subregion'] if 'subregion' in params.keys() else None
-        self.subregion_s0 = params['subregion_s0'] if 'subregion_s0' in params.keys() else 0
-        self.plot_color = params['plot_color'] if 'plot_color' in params.keys() else 'black'
-        self.show_figures = params['show_figures'] if 'show_figures' in params.keys() else True
-        self.save_figures = params['save_figures'] if 'show_figures' in params.keys() else False
-        self.perpendicular = params['peaks_perpendicular'] if 'peaks_perpendicular' in params.keys() else True
-        self.colored_lines = params['colored_lines'] if 'colored_lines' in params.keys() else False
+
 
         ###############################################################################################################
         # Load raw data
@@ -112,10 +113,8 @@ class Nano(object):
             q_increments = 0.005  # Can be increased to 0.01 for coarser (but faster) calculation
             q_bandwidth = 0.005   # Can be increased to 0.01 for coarser (but faster) calculation
             x_powder, y_powder = reduce.extract_intensity_q_lineout(img_fft_gpu, q_increments, q_bandwidth, self.dx)
-        plot.intensity_q_lineout(x_powder, y_powder, save_fig=save_fig[2], show_plot=self.show_figures)
+            plot.intensity_q_lineout(x_powder, y_powder, save_fig=save_fig[2], show_plot=self.show_figures)
 
-<<<<<<< Updated upstream
-=======
         del stacked_data
 
     def bandpass_filter_data_less_memory(self):
@@ -131,27 +130,19 @@ class Nano(object):
         _, rc_window_n = reduce.raised_cosine_window_np(n, beta=0.1)
         window = torch.from_numpy(np.outer(rc_window_m, rc_window_n))  # window shape is (m, n)
 
-        # Pad image if m != n (case for full images)
-        s = max(m, n)
-        if m != n:
-            pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
-
         # Apply bandpass filter to each individual frame
         print('   ...Applying bandpass filter to all frames in image')
         data = torch.zeros(self.data_frames.shape)
         for i in range(n_frames):
             frame = self.data_frames[i, :, :] * window
-            if m != n:
-                frame = pad(frame)
-            data[i, :, :] = reduce.bandpass_filtering_image(frame.to(device), self.q_center,
-                                                        self.bandwidth_q, self.dx, beta=0.1)
+            data[i, :, :] = reduce.bandpass_filtering_image(frame.to(device), self.q_center, self.bandwidth_q, self.dx,
+                                                            beta=0.1)
         # Remove padding
         data = data[:, :m, :n].cpu()
         # Send data back to CPU
         self.data_frames = data
         print('   ...Data has been modified to bandpass filtered images and has shape: {0}'.format(data.shape))
 
->>>>>>> Stashed changes
     def bandpass_filter_data(self):
         """
         Apply bandpass filter to all frames in raw data. Computes stack of banpass filtered real space frames and
@@ -261,9 +252,9 @@ class Nano(object):
               'x or y directions.'.format(max_drift_allowed))
 
         self.data_frames = self.data_frames[first_frame:last_frame, :, :]
-        if not self.data_frames.is_cuda:
-            # Send data to GPU
-            self.data_frames = self.data_frames.to(device)
+        # if not self.data_frames.is_cuda:
+        #     # Send data to GPU
+        #     self.data_frames = self.data_frames.to(device)
 
         # Reading raw data to visualize image after drift correction
         data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
@@ -287,8 +278,10 @@ class Nano(object):
 
         size = padding + max_drift_allowed
         data_corrected = data_corrected[:ct, size:-size, size:-size]
+        data_corrected_bp_filtered = data_corrected_bp_filtered[:ct, size:-size, size:-size].cpu()
+
         # Send data back to CPU
-        self.data_frames = data_corrected_bp_filtered[:ct, size:-size, size:-size].cpu()
+        self.data_frames = data_corrected_bp_filtered
         print('     ...Data has been drift-corrected and new shape is: ', data_corrected.shape)
 
         # Overwrite with stacked data for image
@@ -305,9 +298,9 @@ class Nano(object):
             print('     ...Drift corrected image frames have been saved.')
 
     def select_frames(self, frames):
-        if not self.data_frames.is_cuda:
-            # Send data to GPU
-            self.data_frames = self.data_frames.to(device)
+        # if not self.data_frames.is_cuda:
+        #     # Send data to GPU
+        #     self.data_frames = self.data_frames.to(device)
 
         data = read_raw_data(self.input_folder, self.filename, subregion=self.subregion, s0=self.subregion_s0)
 
@@ -322,8 +315,8 @@ class Nano(object):
             self.data_frames = self.data_frames[frames, :, :]
             data = torch.sum(data[frames, :, :], dim=0)
 
-        # Send data back to CPU
-        self.data_frames = self.data_frames.cpu()
+        # # Send data back to CPU
+        # self.data_frames = self.data_frames.cpu()
 
         plot.hrtem(data.numpy(), size=10, gamma=self.gamma_images, vmax=0, colorbar=False, dx=self.dx,
                    save_fig=self.output_folder + 'selected_stack_sum', show_plot=self.show_figures)
@@ -334,9 +327,6 @@ class Nano(object):
 
     def reduce_data(self, number_frames=None, plot_frequency=0, save_datacube=True):
         print('\nPerforming data reduction.')
-
-        if not self.data_frames.is_cuda:
-            self.data_frames = self.data_frames.to(device)
 
         # Stack frames and account for different situations
         if len(self.data_frames.shape) == 3:
@@ -349,6 +339,11 @@ class Nano(object):
                 print('     ...Stacking all {0} frames'.format(self.data_frames.shape[0]))
                 # Stack all frames together
                 self.data_stacked = torch.sum(self.data_frames, dim=0)
+        else:
+            self.data_stacked = self.data_frames
+
+        if not self.data_stacked.is_cuda:
+            self.data_stacked = self.data_stacked.to(device)
 
         print('\n...Getting datacube.')
         # Getting filters (bandpass and gaussian, then combine)
@@ -412,11 +407,7 @@ class Nano(object):
         self.cluster_output = output
         self.cluster_properties = cluster_properties
 
-<<<<<<< Updated upstream
-    def final_visualizations(self, clusters=True, director_fields=True):
-=======
     def final_visualizations(self, clusters=True, director_fields=True, step_nm=20):
->>>>>>> Stashed changes
         x_length_nm = self.data_stacked.shape[1] * self.dx / 10
         y_length_nm = self.data_stacked.shape[0] * self.dx / 10
         print('\n...Plotting final visualizations')
@@ -430,27 +421,27 @@ class Nano(object):
         if director_fields:
             print('     ...Plotting director fields')
             director.plot_director_field(self.peaks_matrix, self.angles, x_length_nm, y_length_nm,
-<<<<<<< Updated upstream
-                                         perpendicular=self.perpendicular, colored_lines=self.colored_lines,
+                                         perpendicular=self.perpendicular, colored_lines=True,
                                          save_fig=self.output_folder + 'final_visualizations_director_fields',
                                          show_plot=self.show_figures)
 
-    def flow_fields_visualization(self, peaks_parallel_to_chain=False, seed_density=5, bend_tolerance=20,
-=======
-                                         perpendicular=self.perpendicular, step_nm=step_nm, colored_lines=self.colored_lines,
-                                         save_fig=self.output_folder + 'final_visualizations_director_fields',
-                                         show_plot=self.show_figures)
+    def final_visualization_director_field(self, colored=False):
+        x_length_nm = self.data_stacked.shape[1] * self.dx / 10
+        y_length_nm = self.data_stacked.shape[0] * self.dx / 10
 
-    def flow_fields_visualization(self, seed_density=5, bend_tolerance=20,
->>>>>>> Stashed changes
-                                  curve_resolution=2, preview_sparsity=20, line_spacing=1, spacing_resolution=5,
-                                  angle_spacing_degrees=10, max_overlap_fraction=0.5):
+        print('     ...Plotting director fields')
+        director.plot_director_field(self.peaks_matrix, self.angles, x_length_nm, y_length_nm,
+                                     perpendicular=self.perpendicular, colored_lines=colored,
+                                     save_fig=self.output_folder + 'final_visualizations_director_fields',
+                                     show_plot=self.show_figures)
+
+
+    def flow_fields_visualization(self, seed_density=2, bend_tolerance=20, curve_resolution=2, preview_sparsity=20,
+                                  line_spacing=1, spacing_resolution=5, angle_spacing_degrees=10,
+                                  max_overlap_fraction=0.5, show_preview=False):
+
         m, n, th = self.datacube.shape
         k = np.min([m, n])
-<<<<<<< Updated upstream
-=======
-        peaks_parallel_to_chain = ~self.perpendicular
->>>>>>> Stashed changes
 
         # Prepare intensity matrix and peaks matrix
         intensity_matrix = self.datacube[:k, :k, :]
@@ -459,7 +450,7 @@ class Nano(object):
         step_size = self.step_size_pixels * self.dx / 10
 
         # If the diffraction peaks are perpendicular to the chain direction, rotate the matrix 90 degrees
-        prepped_intensity_matrix = flow.prepare_intensity_matrix(intensity_matrix, rotate=peaks_parallel_to_chain)
+        prepped_intensity_matrix = flow.prepare_intensity_matrix(intensity_matrix, rotate=self.perpendicular)
 
         # Create line seeds at each peak
         line_seeds = flow.seed_lines(peaks_matrix_mod, step_size, seed_density=seed_density)
@@ -468,13 +459,14 @@ class Nano(object):
         propagated_lines = flow.propagate_lines(line_seeds, peaks_matrix_mod, step_size, bend_tolerance,
                                                 curve_resolution=curve_resolution, max_grid_length=100)
 
-        # Show a preview, using a subset of the propagated lines
-        # propagated_image = flow.plot_solid_lines(propagated_lines, min_length=2, sparsity=preview_sparsity)
-        #
-        # plt.xlabel('distance / nm')
-        # plt.ylabel('distance / nm')
-        # plt.savefig(self.output_folder + 'propagated_lines_preview')
-        # plt.show()
+        if show_preview:
+            # Show a preview, using a subset of the propagated lines
+            propagated_image = flow.plot_solid_lines(propagated_lines, min_length=2, sparsity=preview_sparsity)
+            plt.xlabel('distance / nm')
+            plt.ylabel('distance / nm')
+            plt.savefig(self.output_folder + 'propagated_lines_preview')
+            plt.show()
+            plt.close()
 
         # Thin out lines, reducing overlap between lines and creating a more homogeneous line density.
         # This prevents the illusion of high density in regions with good alignment, and makes the image more readable.
@@ -482,12 +474,13 @@ class Nano(object):
         trimmed_lines = flow.trim_lines(propagated_lines, prepped_intensity_matrix.shape, step_size,
                                         line_spacing, spacing_resolution, angle_spacing_degrees,
                                         max_overlap_fraction=max_overlap_fraction, min_length=5, verbose=False)
-        # trimmed_image = flow.plot_solid_lines(trimmed_lines)
-        #
-        # plt.xlabel('distance / nm')
-        # plt.ylabel('distance / nm')
-        # plt.savefig(self.output_folder + 'propagated_lines_preview')
-        # plt.show()
+        if show_preview:
+            trimmed_image = flow.plot_solid_lines(trimmed_lines)
+            plt.xlabel('distance / nm')
+            plt.ylabel('distance / nm')
+            plt.savefig(self.output_folder + 'propagated_lines_preview')
+            plt.show()
+            plt.close()
 
         # Add intensity data to lines
         line_data = flow.prepare_line_data(trimmed_lines, prepped_intensity_matrix, step_size)
@@ -498,9 +491,7 @@ class Nano(object):
         # Create amd Format Flow Plots
 
         # There are many ways to format the plots.  I suggest keeping settings organized in the format below.
-        formatted_plots = []
-        # format_codes = [0, 1, 2, 3, 4]
-        format_codes = [0]
+        format_codes = [0, 1, 2, 3, 4]
 
         contrast = 0.1
         gamma = 0.1
@@ -539,8 +530,7 @@ class Nano(object):
                 alpha = np.ones((max_length, n_lines))
 
             flow.plot_graded_lines(trimmed_lines, r, g, b, alpha, linewidth)
-            formatted_plots.append(plt.gcf())
-            #     plt.autoscale(enable=True, axis='both', tight=True)
+            plt.autoscale(enable=True, axis='both', tight=True)
             plt.savefig(self.output_folder + 'flow_plots_code_' + str(i) + '.png', dpi=300)
             plt.show()
 
@@ -560,41 +550,7 @@ def read_raw_data(input_folder, filename, subregion=None, s0=0):
 
     if subregion:
         raw_data = raw_data[:, s0:subregion+s0, s0:subregion+s0]
+        # raw_data = raw_data[:, 2798:, 2670:]
 
     return torch.from_numpy(raw_data)
-
-#
-# def raw_data_preprocesing(data, q_center, bandwidth_q, dx):
-#     print('...Preprocessing')
-#     # Send raw data to GPU
-#     data = torch.from_numpy(data).to(device)
-#     n_frames, m, n = data.shape
-#
-#     # Make raised cosine window
-#     _, rc_window_m = reduce.raised_cosine_window_np(m, beta=0.1)
-#     _, rc_window_n = reduce.raised_cosine_window_np(n, beta=0.1)
-#     window = torch.from_numpy(np.outer(rc_window_m, rc_window_n)).to(device) # window shape is (m, n)
-#
-#     data = data * torch.reshape(window, (1, m, n)).double()
-#     window = window.cpu()
-#     del window
-#
-#     # Pad image if m != n (case for full images)
-#     s = max(m, n)
-#     if m != n:
-#         pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
-#         data = pad(data)
-#
-#     # Get bandpass filtered image
-#     print('   ...Applying bandpass filter to all frames in image')
-#
-#     # Apply bandpass filter to each individual frame
-#     for i in range(n_frames):
-#         data[i, :, :] = reduce.bandpass_filtering_image(data[i, :, :], q_center,
-#                                                                      bandwidth_q, dx, beta=0.1)
-#     data = data[:, :m, :n]
-#     data = data.cpu()
-#     print('   ...Data has been modified to bandpass filtered images and has shape: {0}'.format(data.shape))
-#
-#     return data
 
