@@ -110,9 +110,7 @@ def plot_director_field(peaks_matrix, angles, x_length_nm, y_length_nm, perpendi
                  ax.get_xticklabels() + ax.get_yticklabels()):
         item.set_fontsize(14)
 
-    if save_fig:
-        plt.savefig(save_fig + '.png', dpi=300, bbox_inches='tight')
+    plt.savefig(save_fig + '.png', dpi=300, bbox_inches='tight')
     if show_plot:
         plt.show()
-    else:
-        plt.close(fig)
+    plt.close(fig)

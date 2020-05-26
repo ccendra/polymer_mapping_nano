@@ -101,6 +101,7 @@ def complex_fft(tensor, s=5000, normalize=False):
         fft: powder spectra (real^2 + complex^2) tensor of size (s x s) with Fourier Transform.
              DC frequency component is set in center of tensor.
     """
+    tensor = tensor.double()
     m, n = tensor.shape
     pad = torch.nn.ConstantPad2d(padding=(0, s - n, 0, s - m), value=0)
 
