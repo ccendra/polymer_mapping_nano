@@ -71,13 +71,11 @@ class Nano(object):
 
         return raw_data
 
-
     def visualize(self, data_frames, plot_lineout=False):
 
         pm.initial_visualization(data_frames, self.preliminary_num_frames, self.size_fft_full, self.dx,
                               self.gamma_images, plot_lineout=plot_lineout, show_figures=self.show_figures,
                               save_results=self.save_results, output_folder=self.output_folder)
-
 
     def bandpass_filter_frames(self, data_frames, beta=0.1):
 
@@ -89,13 +87,11 @@ class Nano(object):
 
         return bp_filtered_data
 
-
     def stack_properties(self, data_frames_bp_filtered):
 
         self.x_drift, self.y_drift = \
             pm.analyze_stack_properties(data_frames_bp_filtered, self.plot_color, self.dx, show_figures=self.show_figures,
                                      save_results=self.save_results, output_folder=self.output_folder)
-
 
     def correct_drift_frames(self, data_frames, data_frames_bp_filtered, max_drift_allowed, first_frame, last_frame,
                              save_corrected_results=False):
@@ -107,14 +103,12 @@ class Nano(object):
 
         return data
 
-
     def stack_selected_list_frames(self, data_frames_bp_filtered, frames):
 
         data = pm.stack_selected_frames(data_frames_bp_filtered, frames, self.dx, self.size_fft_full, self.show_figures,
                                         self.save_results, self.output_folder, self.gamma_images)
 
         return data
-
 
     def get_datacube(self, data, plot_frequency=0, number_frames=None, save_datacube=False):
 
@@ -133,7 +127,6 @@ class Nano(object):
 
         return datacube
 
-
     def get_peaks(self, datacube, threshold_function, get_overlap_angles=False, plot_frequency=0, peak_width=1,
                   save_peaks_matrix=False):
 
@@ -145,7 +138,6 @@ class Nano(object):
 
         return peaks_matrix
 
-
     def get_autocorrelations(self, peaks_matrix, maximum_distance_nm, minimum_counts=1, n_cores=8):
 
         corrs_df = pm.calculate_autocorrelations(peaks_matrix, maximum_distance_nm, self.pixel_size_after_reduction,
@@ -155,7 +147,6 @@ class Nano(object):
 
         return corrs_df
 
-
     def autocorrelations_normalize(self, corrs_df, z_score=False, binning=False, robust=True):
 
         corrs_norm = pm.normalize_autocorrelations(corrs_df, z_score=z_score, binning=binning, robust=robust,
@@ -164,28 +155,26 @@ class Nano(object):
 
         return corrs_norm
 
-
     def get_domains(self, peaks_matrix, maximum_bending, minimum_cluster_size, maximum_separation_pixels):
 
         cluster_map, output, cluster_df = pm.find_clusters(peaks_matrix, maximum_bending, minimum_cluster_size,
                                                              maximum_separation_pixels, save_results=self.save_results,
                                                              output_folder=self.output_folder)
+        if self.pixel_size_after_reduction is not None:
+            cluster_df['domain_size_nm'] = np.sqrt(cluster_df['number_pixels'] * self.pixel_size_after_reduction**2)
 
         return cluster_map, output, cluster_df
-
 
     def plot_domains(self, cluster_output):
 
         pm.plot_cluster_output(cluster_output, self.x_length_nm, self.y_length_nm, self.angles, self.perpendicular,
                                self.show_figures, self.save_results, self.output_folder)
 
-
     def director_fields(self, peaks_matrix, colored=False):
 
         pm.plot_director_fields(peaks_matrix, self.x_length_nm, self.y_length_nm, self.angles, self.perpendicular,
                                 colored=colored, show_figures=self.show_figures, save_results=self.save_results,
                                 output_folder=self.output_folder)
-
 
     def flow_fields(self, datacube, peaks_matrix, seed_density=2, bend_tolerance=10, curve_resolution=2,
                      preview_sparsity=20, line_spacing=1, spacing_resolution=5, angle_spacing_degrees=10,

@@ -73,7 +73,7 @@ def seed_lines(peaks_matrix, angles):
 
 
 def plot_director_field(peaks_matrix, angles, x_length_nm, y_length_nm, perpendicular=True,
-                        step_nm=50, size=8, linewidth=0.5, colored_lines=False, save_fig='', show_plot=False):
+                        step_nm=10, size=8, linewidth=0.5, colored_lines=False, save_fig='', show_plot=False):
 
     if perpendicular:
         angles = angles + 90
