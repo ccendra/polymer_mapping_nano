@@ -447,9 +447,9 @@ def find_peaks(datacube, threshold_function, step_size, get_overlap_angles=False
                      hist_kws={'edgecolor': 'black', 'linewidth': 0.5})
         plt.xlim([0, 90])
         plt.xlabel('Relative overlap angle / degrees', fontsize=14)
-        plt.ylabel('Density', fontsize=14)
+        plt.ylabel('Overlap probability', fontsize=14)
         if save_results:
-            plt.savefig(output_folder + 'overlap_angle_N64.png')
+            plt.savefig(output_folder + 'overlap_angle_N64.png', bbox_inches='tight')
             np.save(output_folder + 'overlap_angles_step_size_N' + str(step_size) + '.npy', overlap_angles)
         if show_figures:
             plt.show()
@@ -517,7 +517,7 @@ def normalize_autocorrelations(corrs_df, z_score, binning=False, robust=True,
         if save_results:
             binning_fn = 'binned' if binning else ''
             plt.savefig(output_folder + 'correlations_heatmap_P_r_' + binning_fn + '.png')
-            corrs_df.to_csv(output_folder + 'correlations_P_r' + binning_fn + '.csv', index=True)
+            corrs_prob_r.to_csv(output_folder + 'correlations_P_r' + binning_fn + '.csv', index=True)
         if show_figures:
             plt.show()
         plt.close()
@@ -535,7 +535,7 @@ def normalize_autocorrelations(corrs_df, z_score, binning=False, robust=True,
     if save_results:
         binning_fn = 'binned' if binning else ''
         plt.savefig(output_folder + 'correlations_heatmap_z_score_' + binning_fn + '.png')
-        corrs_df.to_csv(output_folder + 'correlations_z_score_' + binning_fn + '.csv', index=True)
+        corrs_z_score.to_csv(output_folder + 'correlations_z_score_' + binning_fn + '.csv', index=True)
     if show_figures:
         plt.show()
     plt.close()
@@ -560,10 +560,11 @@ def find_clusters(peaks_matrix, maximum_bending, minimum_cluster_size, maximum_s
                                                                     minimum_cluster_size, maximum_separation_pixels)
 
     if save_results:
+        fn = '_max_bending_{0}_N16'.format(str(maximum_bending))
         df = pd.DataFrame.from_dict(cluster_properties, orient='index')
-        df.to_csv(output_folder + 'cluster_properties.csv', index=False)
-        np.save(output_folder + 'cluster_map.npy', cluster_map)
-        np.save(output_folder + 'cluster_output.npy', output)
+        df.to_csv(output_folder + 'cluster_properties' + fn + '.csv', index=False)
+        np.save(output_folder + 'cluster_map' + fn + '.npy', cluster_map)
+        np.save(output_folder + 'cluster_output' + fn + '.npy', output)
 
     return cluster_map, output, df
 

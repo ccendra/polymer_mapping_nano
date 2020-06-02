@@ -122,7 +122,8 @@ def try_forming_cluster(input_array, input_counter, theta, threshold, start_row,
 
         for col in range(col_start, n):
             thetas = input_array[row, col]  # get possible theta values
-            if (~np.isnan(thetas)).any():
+            # if (~np.isnan(thetas)).any():
+            if (thetas != -1).any():
                 closest_theta_index = np.nanargmin(np.abs(np.mean(theta_list) - thetas))
                 th = input_array[row, col, closest_theta_index]
                 if input_counter[row, col] > 0 and point_belongs_to_cluster(th, x_coords, y_coords, theta_list, threshold,
