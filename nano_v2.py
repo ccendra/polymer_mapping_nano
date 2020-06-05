@@ -130,7 +130,7 @@ class Nano(object):
     def get_peaks(self, datacube, threshold_function, get_overlap_angles=False, plot_frequency=0, peak_width=1,
                   save_peaks_matrix=False):
 
-        peaks_matrix = pm.find_peaks(datacube, threshold_function, self.step_size_pixels,
+        peaks_matrix = pm.find_peaks(datacube, threshold_function, self.N, self.step_size_pixels,
                                      get_overlap_angles=get_overlap_angles, plot_frequency=plot_frequency,
                                      peak_width=peak_width, save_peaks_matrix=save_peaks_matrix,
                                      show_figures=self.show_figures, save_results=self.save_results,

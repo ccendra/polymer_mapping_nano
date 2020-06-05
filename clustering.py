@@ -85,6 +85,13 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
         print('     ...Mean size of clusters is {0} pixels'.format(np.round(np.mean(num_pixels), 2)))
     print('     ...Clustering time(s): ', np.round((time.time() - start_time), 1))
 
+    cluster_map = cluster_map.astype(np.float)
+    cluster_map[cluster_map == -1] = np.nan
+
+    output = output.astype(np.float)
+    output[output == -1] = np.nan
+
+
     return cluster_map, output, cluster_properties
 
 
@@ -163,17 +170,32 @@ def point_belongs_to_cluster(value, x_coords, y_coords, theta_list, threshold, r
 def plot_cluster_map(output, angles, xlength, ylength, save_fig='', show_plot=False):
 
     cmap = colors.ListedColormap(plot.get_colors(angles + 90))
-    fig = plt.figure(figsize=(10, 10))
+
+    fig, ax = plt.subplots(figsize=(8, 8))
     for i in range(output.shape[0]):
-        plt.imshow(output[i, :, :], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
-    # plt.xticks([])
-    # plt.yticks([])
+        ax.imshow(output[i, :, :], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
+
+    ax.autoscale(enable=True, axis='both', tight=True)
+    plt.xlabel('distance / nm')
+    plt.ylabel('distance / nm')
     if save_fig:
         plt.savefig(save_fig + '.png', dpi=300, transparent=True)
     if show_plot:
         plt.show()
     else:
         plt.close(fig)
+
+    # fig = plt.figure(figsize=(8, 8))
+    # for i in range(output.shape[0]):
+    #     plt.imshow(output[i, :, :], vmin=0, vmax=180, alpha=0.5, cmap=cmap, extent=[0, xlength, 0, ylength])
+    # plt.xlabel('distance / nm', fontsize=14)
+    # plt.ylabel('distance / nm', fontsize=14)
+    # if save_fig:
+    #     plt.savefig(save_fig + '.png', dpi=300, transparent=True)
+    # if show_plot:
+    #     plt.show()
+    # else:
+    #     plt.close(fig)
 
 
 def cumulative_step_histogram(cluster_size, title='', save_fig=''):

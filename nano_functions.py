@@ -404,14 +404,14 @@ def reduce_data(data, q_center, sigma_q, sigma_th, dx, bandwidth_q, angles, N, M
     torch.cuda.empty_cache()    # housekeeping
 
     if save_datacube:
-        np.save(output_folder + 'datacube_step_size_N' + str(step_size) + '.npy', datacube.numpy())
+        np.save(output_folder + 'datacube_window_size_N_{0}_step_size_{1}.npy'.format(N, step_size), datacube.numpy())
     if save_results:
         np.save(output_folder + 'stacked_images.npy', data.numpy())
 
     return datacube, (data.shape)
 
 
-def find_peaks(datacube, threshold_function, step_size, get_overlap_angles=False, plot_frequency=0, peak_width=1,
+def find_peaks(datacube, threshold_function, N, step_size, get_overlap_angles=False, plot_frequency=0, peak_width=1,
                save_peaks_matrix=False, show_figures=False, save_results=False, output_folder=''):
     """
 
@@ -435,7 +435,8 @@ def find_peaks(datacube, threshold_function, step_size, get_overlap_angles=False
                                                 plot_freq=plot_frequency)
 
     if save_peaks_matrix:
-        np.save(output_folder + 'peaks_matrix_step_size_N' + str(step_size) + '.npy', peaks_matrix)
+        np.save(output_folder + 'peaks_matrix_window_size_N_{0}_step_size_{1}.npy'.format(N, step_size), peaks_matrix)
+
 
     # Average number of peaks
     m, n, th = peaks_matrix.shape
@@ -449,8 +450,9 @@ def find_peaks(datacube, threshold_function, step_size, get_overlap_angles=False
         plt.xlabel('Relative overlap angle / degrees', fontsize=14)
         plt.ylabel('Overlap probability', fontsize=14)
         if save_results:
-            plt.savefig(output_folder + 'overlap_angle_N64.png', bbox_inches='tight')
-            np.save(output_folder + 'overlap_angles_step_size_N' + str(step_size) + '.npy', overlap_angles)
+            plt.savefig(output_folder + 'overlap_angles_window_size_N_{0}_step_size_{1}.png'.format(N, step_size), bbox_inches='tight')
+            np.save(output_folder + 'overlap_angles_window_size_N_{0}_step_size_{1}.npy'.format(N, step_size), overlap_angles)
+
         if show_figures:
             plt.show()
         plt.close()
