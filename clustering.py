@@ -29,15 +29,17 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
                 troubleshooting or more analysis.
     """
     # Initialize outputs
+    global input_array
+
     m, n, _ = data.shape
+    print('debugging is the essence of progress 3')
 
     rows, cols, angles = np.where(data > 0)
     k = int(np.max(np.sum(data, axis=2)))
 
     # Make input arrays
     input_array = np.full(shape=(m, n, k), fill_value=-1, dtype=np.int16)
-    # input_counter = np.zeros((m, n), dtype=np.int16)
-    input_counter = np.full(shape=(m, n), fill_value=-1, dtype=np.int16)
+    input_counter = np.zeros((m, n), dtype=np.int16)
 
     # Fill input arrays with values
     for i in range(len(rows)):
@@ -65,8 +67,8 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
             for i in range(input_counter[row, col]):
                 theta = input_array[row, col, i]
                 if input_counter[row, col] > 0:
-                    theta_array, x_coords, y_coords = try_forming_cluster(input_array, input_counter, theta, threshold,
-                                                                         row, col, max_separation)
+                    theta_array, x_coords, y_coords = try_forming_cluster(input_counter, theta, threshold, row, col,
+                                                                          max_separation)
                     # Determine if found cluster is large enough to be considered a cluster. If yes, save it in outputs.
                     if len(x_coords) >= min_cluster_size:
                         cluster_map[input_counter[x_coords, y_coords]-1, x_coords, y_coords] = cluster_number
@@ -85,8 +87,8 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
         print('     ...Mean size of clusters is {0} pixels'.format(np.round(np.mean(num_pixels), 2)))
     print('     ...Clustering time(s): ', np.round((time.time() - start_time), 1))
 
-    cluster_map = cluster_map.astype(np.float)
-    cluster_map[cluster_map == -1] = np.nan
+    # cluster_map = cluster_map.astype(np.float)
+    # cluster_map[cluster_map == -1] = np.nan
 
     output = output.astype(np.float)
     output[output == -1] = np.nan
@@ -95,7 +97,7 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
     return cluster_map, output, cluster_properties
 
 
-def try_forming_cluster(input_array, input_counter, theta, threshold, start_row, start_col, separation):
+def try_forming_cluster(input_counter, theta, threshold, start_row, start_col, separation):
     """Iterates over data array at a certain starting point (start row, start col) and searches for neighboring points
     that can form a cluster. Returns a single cluster and list of orientation values.
     Arguments:
@@ -133,11 +135,12 @@ def try_forming_cluster(input_array, input_counter, theta, threshold, start_row,
             if (thetas != -1).any():
                 closest_theta_index = np.nanargmin(np.abs(np.mean(theta_list) - thetas))
                 th = input_array[row, col, closest_theta_index]
-                if input_counter[row, col] > 0 and point_belongs_to_cluster(th, x_coords, y_coords, theta_list, threshold,
-                                                                            row, col, separation):
+                if input_counter[row, col] > 0 and \
+                        point_belongs_to_cluster(th, x_coords, y_coords, theta_list, threshold, row, col, separation):
                     x_coords = np.append(x_coords, row)
                     y_coords = np.append(y_coords, col)
                     theta_list = np.append(theta_list, th)  # Update orientation list
+                    input_array[row, col, closest_theta_index] = -1
 
     return theta_list, x_coords, y_coords
 
