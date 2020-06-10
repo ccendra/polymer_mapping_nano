@@ -29,7 +29,7 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
                 troubleshooting or more analysis.
     """
     # Initialize outputs
-    global input_array
+    global input_array      # Global function as this array is constantly being modified during clustering 
 
     m, n, _ = data.shape
     print('debugging is the essence of progress 3')
