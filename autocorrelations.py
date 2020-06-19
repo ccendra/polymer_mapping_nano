@@ -296,7 +296,8 @@ def correlations_intensity(data, zz, pixel_size, min_counts, z_score=True, bin_r
     correlations = correlations[distances]
 
     # Step 4: divide total volume of datacube to complete volume average normalization
-    correlations = correlations / np.sum(correlations, axis=1).reshape(-1, 1)
+    # correlations = correlations / np.sum(correlations, axis=1).reshape(-1, 1)
+    print('not doing correlations normalization')
 
     # Step 5: generate 3d corrrelations dataframe, rows are different distances and columns delta_th
     corrs_df = pd.DataFrame(correlations, index=list(unique_distances[distances]))

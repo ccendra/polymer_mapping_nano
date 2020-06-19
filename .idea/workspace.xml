@@ -2,7 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="648204eb-abda-4ec3-9714-560220a30dd5" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/polymer_mapping_nano.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/polymer_mapping_nano.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/autocorrelations.py" beforeDir="false" afterPath="$PROJECT_DIR$/autocorrelations.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/clustering.py" beforeDir="false" afterPath="$PROJECT_DIR$/clustering.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nano_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/nano_functions.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -28,100 +33,7 @@
     <favorites_list name="polymer_mapping_nano" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/nano_functions.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2560">
-              <caret line="423" column="24" selection-start-line="423" selection-start-column="24" selection-end-line="423" selection-end-column="24" />
-              <folding>
-                <element signature="e#19#31#0" expanded="true" />
-                <element signature="e#935#2414#0" />
-                <element signature="e#2612#5909#0" />
-                <element signature="e#6008#7545#0" />
-                <element signature="e#7669#10985#0" />
-                <element signature="e#11266#14282#0" />
-                <element signature="e#14463#15630#0" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/director_fields.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="860">
-              <caret line="46" column="17" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/clustering.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="620">
-              <caret line="31" column="107" selection-start-line="31" selection-start-column="107" selection-end-line="31" selection-end-column="107" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/plot_functions.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1720">
-              <caret line="105" column="7" lean-forward="true" selection-start-line="105" selection-start-column="7" selection-end-line="105" selection-end-column="7" />
-              <folding>
-                <element signature="e#0#28#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/auxiliary_functions.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="880">
-              <caret line="81" column="41" selection-start-line="81" selection-start-column="4" selection-end-line="81" selection-end-column="41" />
-              <folding>
-                <element signature="e#0#22#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/nano_v2.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="100">
-              <caret line="32" column="7" lean-forward="true" selection-start-line="32" selection-start-column="7" selection-end-line="32" selection-end-column="7" />
-              <folding>
-                <element signature="e#19#31#0" expanded="true" />
-                <element signature="e#3761#3895#0" />
-                <element signature="e#3964#4263#0" />
-                <element signature="e#4335#4825#0" />
-                <element signature="e#4893#5149#0" />
-                <element signature="e#5337#5784#0" />
-                <element signature="e#5870#6101#0" />
-                <element signature="e#6205#7062#0" />
-                <element signature="e#7229#7723#0" />
-                <element signature="e#7834#8260#0" />
-                <element signature="e#8366#8693#0" />
-                <element signature="e#8811#9350#0" />
-                <element signature="e#9405#9601#0" />
-                <element signature="e#9672#9957#0" />
-                <element signature="e#10247#10953#0" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="375" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -166,30 +78,30 @@
         <option value="$PROJECT_DIR$/script.py" />
         <option value="$PROJECT_DIR$/drift_correction.py" />
         <option value="$PROJECT_DIR$/batch_idtbt.py" />
-        <option value="$PROJECT_DIR$/reduce_data.py" />
         <option value="$PROJECT_DIR$/autocorrelations_v2.py" />
-        <option value="$PROJECT_DIR$/autocorrelations.py" />
         <option value="$PROJECT_DIR$/nano.py" />
         <option value="$PROJECT_DIR$/director_fields.py" />
         <option value="$PROJECT_DIR$/flow_fields.py" />
         <option value="$PROJECT_DIR$/persistence_length.py" />
-        <option value="$PROJECT_DIR$/nano_functions.py" />
         <option value="$PROJECT_DIR$/nano_v2.py" />
         <option value="$PROJECT_DIR$/clustering.py" />
+        <option value="$PROJECT_DIR$/reduce_data.py" />
+        <option value="$PROJECT_DIR$/nano_functions.py" />
+        <option value="$PROJECT_DIR$/autocorrelations.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1952" />
-    <option name="width" value="1897" />
-    <option name="height" value="2168" />
+    <option name="x" value="1063" />
+    <option name="y" value="78" />
+    <option name="width" value="2609" />
+    <option name="height" value="1795" />
   </component>
   <component name="ProjectView">
     <navigator currentView="Scope" currentSubView="Scope 'Project Files'; set:Project Files; class com.intellij.psi.search.scope.ProjectFilesScope" proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="ProjectPane" />
       <pane id="Scope">
         <subPane subId="Scope 'Project Files'; set:Project Files; class com.intellij.psi.search.scope.ProjectFilesScope">
           <expand>
@@ -201,6 +113,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="ProjectPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -221,7 +134,7 @@
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="editor.preferences.fonts.default" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.language" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -234,6 +147,30 @@
         </RuleState>
       </list>
     </option>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <module name="polymer_mapping_nano" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -268,11 +205,18 @@
       <workItem from="1591380844374" duration="3599000" />
       <workItem from="1591419353657" duration="904000" />
       <workItem from="1591633005345" duration="9412000" />
+      <workItem from="1591899100342" duration="1973000" />
+      <workItem from="1592091583528" duration="5730000" />
+      <workItem from="1592260390343" duration="937000" />
+      <workItem from="1592358986204" duration="1195000" />
+      <workItem from="1592417925128" duration="615000" />
+      <workItem from="1592503997171" duration="5966000" />
+      <workItem from="1592600244267" duration="302000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="280544000" />
+    <option name="totallyTimeSpent" value="297262000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -284,11 +228,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1562" y="0" width="1517" height="1734" extended-state="0" />
-    <editor active="true" />
+    <frame x="851" y="63" width="2087" height="1436" extended-state="0" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" weight="0.32995737" />
-      <window_info content_ui="combo" id="Project" order="1" sideWeight="0.49861497" visible="true" weight="0.17277125" />
+      <window_info active="true" content_ui="combo" id="Project" order="1" sideWeight="0.49861497" visible="true" weight="0.2652454" />
       <window_info id="Structure" order="2" sideWeight="0.50138503" side_tool="true" weight="0.10660981" />
       <window_info id="Remote Host" order="3" weight="0.30769232" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -304,7 +247,35 @@
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Terminal" order="11" weight="0.32875857" />
       <window_info anchor="bottom" id="Python Console" order="12" weight="0.24081115" />
-      <window_info active="true" anchor="bottom" id="File Transfer" order="13" visible="true" weight="0.21673004" />
+      <window_info anchor="bottom" id="File Transfer" order="13" visible="true" weight="0.28828126" />
+      <window_info anchor="right" id="Database" order="0" weight="0.049779885" />
+      <window_info anchor="right" id="R Packages" order="1" show_stripe_button="false" weight="0.32945207" />
+      <window_info anchor="right" id="R Graphics" order="2" show_stripe_button="false" weight="0.32945207" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="3" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="4" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="5" weight="0.25" />
+      <window_info anchor="right" id="SciView" order="6" sideWeight="0.51875" visible="true" weight="0.072880514" />
+      <window_info anchor="right" x="0" y="0" width="329" height="1534" id="Documentation" order="7" sideWeight="0.48125" side_tool="true" visible="true" weight="0.072880514" />
+    </layout>
+    <layout-to-restore>
+      <window_info id="Favorites" order="0" side_tool="true" weight="0.32995737" />
+      <window_info active="true" content_ui="combo" id="Project" order="1" sideWeight="0.49861497" visible="true" weight="0.19007093" />
+      <window_info id="Structure" order="2" sideWeight="0.50138503" side_tool="true" weight="0.10660981" />
+      <window_info id="Remote Host" order="3" weight="0.30769232" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.32827735" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.32827735" />
+      <window_info anchor="bottom" id="Database Changes" order="9" />
+      <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
+      <window_info anchor="bottom" id="Terminal" order="11" weight="0.32875857" />
+      <window_info anchor="bottom" id="Python Console" order="12" weight="0.24081115" />
+      <window_info anchor="bottom" id="File Transfer" order="13" visible="true" weight="0.23495883" />
       <window_info anchor="right" id="Database" order="0" weight="0.049779885" />
       <window_info anchor="right" id="R Packages" order="1" show_stripe_button="false" weight="0.32945207" />
       <window_info anchor="right" id="R Graphics" order="2" show_stripe_button="false" weight="0.32945207" />
@@ -312,7 +283,7 @@
       <window_info anchor="right" id="Ant Build" order="4" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="5" weight="0.25" />
       <window_info anchor="right" id="SciView" order="6" weight="0.32942432" />
-    </layout>
+    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
@@ -359,16 +330,6 @@
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/batch_idtbt.py" />
-    <entry file="file://$PROJECT_DIR$/autocorrelations_v2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="226">
-          <caret line="121" column="58" selection-start-line="121" selection-start-column="58" selection-end-line="121" selection-end-column="58" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/drift_correction.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="273">
@@ -393,52 +354,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/reduce_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="20">
-          <caret line="5" selection-start-line="5" selection-end-line="5" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-            <element signature="e#153#1508#0" />
-            <element signature="e#1545#1667#0" />
-            <element signature="e#2148#3119#0" />
-            <element signature="e#3214#4014#0" />
-            <element signature="e#4092#4762#0" />
-            <element signature="e#7119#8277#0" />
-            <element signature="e#8360#9644#0" />
-            <element signature="e#9700#10306#0" />
-            <element signature="e#10341#10804#0" />
-            <element signature="e#10859#11604#0" />
-            <element signature="e#11653#12680#0" />
-            <element signature="e#12783#14792#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/flow_fields.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="18120">
           <caret line="912" column="76" selection-start-line="912" selection-start-column="76" selection-end-line="912" selection-end-column="76" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/autocorrelations.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="920">
-          <caret line="215" column="77" selection-start-line="215" selection-start-column="4" selection-end-line="215" selection-end-column="77" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-            <element signature="e#713#863#0" />
-            <element signature="e#937#1578#0" />
-            <element signature="e#1741#4750#0" />
-            <element signature="e#4859#5596#0" />
-            <element signature="e#5718#8118#0" />
-            <element signature="e#8883#12698#0" />
-            <element signature="e#12804#14577#0" />
-            <element signature="e#14660#15473#0" />
           </folding>
         </state>
       </provider>
@@ -478,16 +399,50 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/nano_functions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2560">
-          <caret line="423" column="24" selection-start-line="423" selection-start-column="24" selection-end-line="423" selection-end-column="24" />
+        <state relative-caret-position="9880">
+          <caret line="520" column="61" selection-start-line="520" selection-start-column="61" selection-end-line="520" selection-end-column="61" />
           <folding>
             <element signature="e#19#31#0" expanded="true" />
             <element signature="e#935#2414#0" />
-            <element signature="e#2612#5909#0" />
-            <element signature="e#6008#7545#0" />
-            <element signature="e#7669#10985#0" />
-            <element signature="e#11266#14282#0" />
-            <element signature="e#14463#15630#0" />
+            <element signature="e#26059#31060#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/autocorrelations.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="660">
+          <caret line="237" column="90" selection-start-line="237" selection-start-column="90" selection-end-line="237" selection-end-column="90" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#229#674#0" />
+            <element signature="e#713#863#0" />
+            <element signature="e#937#1578#0" />
+            <element signature="e#1741#4750#0" />
+            <element signature="e#4859#5596#0" />
+            <element signature="e#5718#8118#0" />
+            <element signature="e#8204#8785#0" />
+            <element signature="e#8883#12698#0" />
+            <element signature="e#12804#14577#0" />
+            <element signature="e#14660#15473#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/reduce_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="400">
+          <caret line="52" column="7" lean-forward="true" selection-start-line="52" selection-start-column="7" selection-end-line="52" selection-end-column="7" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#153#1508#0" />
+            <element signature="e#1545#1667#0" />
+            <element signature="e#7119#8277#0" />
+            <element signature="e#8360#9644#0" />
+            <element signature="e#9700#10306#0" />
+            <element signature="e#10859#11604#0" />
+            <element signature="e#11653#12680#0" />
+            <element signature="e#12783#14792#0" />
           </folding>
         </state>
       </provider>
@@ -502,10 +457,47 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/clustering.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="34" selection-start-line="34" selection-end-line="34" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/autocorrelations_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="80">
+          <caret line="4" column="31" selection-start-line="4" selection-start-column="31" selection-end-line="4" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/plot_functions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1181">
+          <caret line="138" selection-start-line="138" selection-end-line="141" selection-end-column="27" />
+          <folding>
+            <element signature="e#0#28#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/auxiliary_functions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1181">
+          <caret line="81" column="41" selection-start-line="81" selection-start-column="4" selection-end-line="81" selection-end-column="41" />
+          <folding>
+            <element signature="e#0#22#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/nano_v2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="100">
-          <caret line="32" column="7" lean-forward="true" selection-start-line="32" selection-start-column="7" selection-end-line="32" selection-end-column="7" />
+        <state relative-caret-position="840">
+          <caret line="42" column="38" selection-start-line="42" selection-start-column="38" selection-end-line="42" selection-end-column="38" />
           <folding>
             <element signature="e#19#31#0" expanded="true" />
             <element signature="e#3761#3895#0" />
@@ -517,41 +509,10 @@
             <element signature="e#6205#7062#0" />
             <element signature="e#7229#7723#0" />
             <element signature="e#7834#8260#0" />
-            <element signature="e#8366#8693#0" />
             <element signature="e#8811#9350#0" />
             <element signature="e#9405#9601#0" />
             <element signature="e#9672#9957#0" />
             <element signature="e#10247#10953#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/plot_functions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1720">
-          <caret line="105" column="7" lean-forward="true" selection-start-line="105" selection-start-column="7" selection-end-line="105" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#28#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/auxiliary_functions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="880">
-          <caret line="81" column="41" selection-start-line="81" selection-start-column="4" selection-end-line="81" selection-end-column="41" />
-          <folding>
-            <element signature="e#0#22#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/clustering.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="620">
-          <caret line="31" column="107" selection-start-line="31" selection-start-column="107" selection-end-line="31" selection-end-column="107" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>

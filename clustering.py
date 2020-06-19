@@ -32,7 +32,6 @@ def find_clusters(data, threshold, min_cluster_size, max_separation):
     global input_array      # Global function as this array is constantly being modified during clustering 
 
     m, n, _ = data.shape
-    print('debugging is the essence of progress 3')
 
     rows, cols, angles = np.where(data > 0)
     k = int(np.max(np.sum(data, axis=2)))

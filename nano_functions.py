@@ -100,8 +100,8 @@ def initial_visualization(data, preliminary_num_frames, size_fft, dx, gamma_imag
 
     # Calculate azimuthally integrated powder lineout (using FFT in GPU)
     if plot_lineout:
-        q_increments = 0.01  # Can be increased to 0.01 for coarser (but faster) calculation
-        q_bandwidth = 0.01   # Can be increased to 0.01 for coarser (but faster) calculation
+        q_increments = 0.01  # Can be increased to 0.01 (from 0.005) for coarser (but faster) calculation
+        q_bandwidth = 0.01   # Can be increased to 0.01 (from 0.005) for coarser (but faster) calculation
         x_powder, y_powder = reduce.extract_intensity_q_lineout(img_fft_gpu, q_increments, q_bandwidth, dx)
         if save_results:
             lineout = pd.DataFrame(np.array([x_powder, y_powder]).T, columns=['q', 'intensity'])
@@ -486,7 +486,7 @@ def calculate_autocorrelations(peaks_matrix, maximum_distance_nm, pixel_size, mi
     ax.set_ylabel('|Δθ| / degrees', fontsize=14)
     ax.set_ylim([0, 90.5])
     if save_results:
-        plt.savefig(output_folder + 'correlations_heatmap_raw.png')
+        plt.savefig(output_folder + 'correlations_heatmap_raw.png', dpi=300)
         corrs_df.to_csv(output_folder + 'correlations_raw.csv', index=True)
     if show_figures:
         plt.show()
@@ -518,7 +518,7 @@ def normalize_autocorrelations(corrs_df, z_score, binning=False, robust=True,
         ax.set_ylim([0, 90.5])
         if save_results:
             binning_fn = 'binned' if binning else ''
-            plt.savefig(output_folder + 'correlations_heatmap_P_r_' + binning_fn + '.png')
+            plt.savefig(output_folder + 'correlations_heatmap_P_r_' + binning_fn + '.png', dpi=300)
             corrs_prob_r.to_csv(output_folder + 'correlations_P_r' + binning_fn + '.csv', index=True)
         if show_figures:
             plt.show()
@@ -536,7 +536,7 @@ def normalize_autocorrelations(corrs_df, z_score, binning=False, robust=True,
     ax.set_ylim([0, 90.5])
     if save_results:
         binning_fn = 'binned' if binning else ''
-        plt.savefig(output_folder + 'correlations_heatmap_z_score_' + binning_fn + '.png')
+        plt.savefig(output_folder + 'correlations_heatmap_z_score_' + binning_fn + '.png', dpi=300)
         corrs_z_score.to_csv(output_folder + 'correlations_z_score_' + binning_fn + '.csv', index=True)
     if show_figures:
         plt.show()
@@ -560,10 +560,10 @@ def find_clusters(peaks_matrix, maximum_bending, minimum_cluster_size, maximum_s
     print('\n...Finding clusters')
     cluster_map, output, cluster_properties = cluster.find_clusters(peaks_matrix, maximum_bending,
                                                                     minimum_cluster_size, maximum_separation_pixels)
+    df = pd.DataFrame.from_dict(cluster_properties, orient='index')
 
     if save_results:
         fn = '_max_bending_{0}_N16'.format(str(maximum_bending))
-        df = pd.DataFrame.from_dict(cluster_properties, orient='index')
         df.to_csv(output_folder + 'cluster_properties' + fn + '.csv', index=False)
         np.save(output_folder + 'cluster_map' + fn + '.npy', cluster_map)
         np.save(output_folder + 'cluster_output' + fn + '.npy', output)
