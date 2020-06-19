@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from PIL import Image
 
 # Custom packages - each performs different task
 import reduce_data as reduce    # Reduce data in fourier space and get datacube
@@ -19,7 +20,7 @@ import flow_fields as flow     # Flow fields visualization
 #######################################################################################################################
 # Functions
 
-def read_raw_data(input_folder, filename, subregion=None, s0=0):
+def read_raw_data(input_folder, filename, subregion=None, s0=0, use_pil=False):
     """
     Reads raw .mrc or .tif data frames and stores them as torch tensor (on CPU). User can specify to select a subregion
     of image. Subregion variable selects top left corner of image for specified range, or user can specify to get
@@ -33,19 +34,22 @@ def read_raw_data(input_folder, filename, subregion=None, s0=0):
     file_type = filename.split('.')[-1]     # Determine file ending (.mrc or .tif accepted ATM).
     fn = input_folder + filename
     raw_data = None
-    if file_type == 'mrc':
-        print('\n...Opening .mrc file')
-        raw_data = aux.read_mrc(fn)     # Calls auxiliary function to read .mrc
-    elif file_type == 'tif':
-        print('\n...Opening .tif file')
-        raw_data = aux.read_tif(fn)     # Calls auxiliary function to read .tif
-    else:   # User here could add options to open other file types.
-        print('Invalid file type. Accepted files are either .mrc or .tif')
+    if use_pil:
+        raw_data = np.array(Image.open(fn))
+    else:
+        if file_type == 'mrc':
+            print('\n...Opening .mrc file')
+            raw_data = aux.read_mrc(fn)     # Calls auxiliary function to read .mrc
+        elif file_type == 'tif':
+            print('\n...Opening .tif file')
+            raw_data = aux.read_tif(fn)     # Calls auxiliary function to read .tif
+        else:   # User here could add options to open other file types.
+            print('Invalid file type. Accepted files are either .mrc or .tif')
 
     if subregion:   # Select subregion. Top left corner as default, unless s0 is specified
         raw_data = raw_data[:, s0:subregion+s0, s0:subregion+s0]
 
-    return torch.from_numpy(raw_data)   # Tensor in CPU
+    return torch.from_numpy(raw_data).double()   # Tensor in CPU
 
 
 def initial_visualization(data, preliminary_num_frames, size_fft, dx, gamma_images=1, plot_lineout=False,
@@ -73,9 +77,10 @@ def initial_visualization(data, preliminary_num_frames, size_fft, dx, gamma_imag
         data = data.to('cuda')
 
     # Stack n first frames of data
-    data = torch.sum(data[:preliminary_num_frames, :, :], dim=0)
-    print('     ...The first {0} image frames have been stacked and image size is: {1}'.
-          format(preliminary_num_frames, data.shape))
+    if len(data.shape) == 3:
+        data = torch.sum(data[:preliminary_num_frames, :, :], dim=0)
+        print('     ...The first {0} image frames have been stacked and image size is: {1}'.
+              format(preliminary_num_frames, data.shape))
     # Determine output filenames in case figures are saved
     if save_results:
         save_res = [output_folder + 'initial_visualization_hrtem',
@@ -408,7 +413,7 @@ def reduce_data(data, q_center, sigma_q, sigma_th, dx, bandwidth_q, angles, N, M
     if save_results:
         np.save(output_folder + 'stacked_images.npy', data.numpy())
 
-    return datacube, (data.shape)
+    return datacube
 
 
 def find_peaks(datacube, threshold_function, N, step_size, get_overlap_angles=False, plot_frequency=0, peak_width=1,
